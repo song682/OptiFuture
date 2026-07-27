@@ -447,8 +447,8 @@ public class ColorizeBlock {
         }
     }
 
-    // Called by asm
-    @SuppressWarnings("unused")
+    // Called by cc.client.renderer.MixinRenderBlocks to apply smooth biome colors per face
+    // 由 cc.client.renderer.MixinRenderBlocks 调用，用于逐面应用平滑群系颜色
     public static boolean setupBlockSmoothing(RenderBlocks renderBlocks, Block block, IBlockAccess blockAccess, int i,
         int j, int k, int face, float topLeft, float bottomLeft, float bottomRight, float topRight) {
         return RenderBlocksUtils.useColorMultiplier(face) && setupBiomeSmoothing(

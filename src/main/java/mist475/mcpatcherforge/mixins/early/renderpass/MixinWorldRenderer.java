@@ -24,10 +24,15 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.prupe.mcpatcher.renderpass.RenderPass;
 
 /**
- * Note: class is also modified by WorldRendererTransformer
+ * Note: the render-pass bookkeeping formerly done by the ASM WorldRendererTransformer is now
+ * handled here by {@link #redirectCheckRenderPassesUpdateRenderer}.
+ * 注：原由 ASM WorldRendererTransformer 完成的渲染 pass 记账逻辑，现已由
+ * {@link #redirectCheckRenderPassesUpdateRenderer} 在本类中承担。
  */
 @Mixin(WorldRenderer.class)
 public abstract class MixinWorldRenderer {
@@ -96,6 +101,30 @@ public abstract class MixinWorldRenderer {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;canRenderInPass(I)Z", remap = false))
     private boolean redirectCanRenderInThisPassUpdateRenderer(Block block, int pass) {
         return RenderPass.canRenderInThisPass(block.getRenderBlockPass() == pass);
+    }
+
+    /**
+     * Mixin port of the former WorldRendererTransformer. The vanilla code reads
+     * "int k3 = block.getRenderBlockPass(); if (k3 > k2) flag = true;" and the ASM patch replaced
+     * the if-statement with "flag = RenderPass.checkRenderPasses(block, flag);". Here we hijack the
+     * getRenderBlockPass() call instead: the flag (local slot 18, the same slot the ASM patch
+     * targeted with ISTORE 18) is rewritten through checkRenderPasses, and -1 is returned so the
+     * vanilla "k3 > k2" comparison can never fire. Keeping the vanilla check alive would wrongly
+     * schedule extra passes for blocks whose render pass was remapped by renderpass.properties.
+     * 原 WorldRendererTransformer 的 Mixin 移植。原版代码为
+     * “int k3 = block.getRenderBlockPass(); if (k3 > k2) flag = true;”，ASM 补丁把 if 语句替换成
+     * “flag = RenderPass.checkRenderPasses(block, flag);”。这里改为劫持 getRenderBlockPass() 调用：
+     * 先通过 checkRenderPasses 改写 flag（局部变量槽 18，与 ASM 补丁 ISTORE 18 针对的是同一个槽位），
+     * 再返回 -1 使原版 “k3 > k2” 比较永远不成立。若保留原版判断，被 renderpass.properties
+     * 重映射过渲染 pass 的方块会错误地多触发一轮 pass。
+     */
+    @Redirect(
+        method = "updateRenderer(Lnet/minecraft/entity/EntityLivingBase;)V",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getRenderBlockPass()I"))
+    private int redirectCheckRenderPassesUpdateRenderer(Block block,
+        @Local(index = 18) LocalBooleanRef moreRenderPasses) {
+        moreRenderPasses.set(RenderPass.checkRenderPasses(block, moreRenderPasses.get()));
+        return -1;
     }
 
     /*

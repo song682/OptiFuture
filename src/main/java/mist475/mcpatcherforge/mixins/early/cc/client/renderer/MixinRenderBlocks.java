@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
@@ -301,6 +302,169 @@ public abstract class MixinRenderBlocks {
         ordinal = 1)
     private boolean redirectColorMultiplierPartial5(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(5);
+    }
+
+    // Mixin port of the former RenderBlocksTransformer: right before each face is drawn, let
+    // ColorizeBlock try to apply smooth biome colors. When setupBlockSmoothing returns true it
+    // overwrites all twelve colorXxx fields without reading them, so the vanilla vertex colors
+    // computed above are simply discarded; when it returns false they are kept untouched. This is
+    // behaviorally identical to the old bytecode wrapper
+    // "if (!setupBlockSmoothing(...)) { vanilla color math }".
+    // The locals at slots 9-12 are the per-vertex brightness ratios (f3-f6), exactly the values
+    // the ASM patch loaded with FLOAD 9-12.
+    // 原 RenderBlocksTransformer 的 Mixin 移植：在每个面绘制前让 ColorizeBlock 尝试应用平滑群系颜色。
+    // setupBlockSmoothing 返回 true 时会不读旧值地覆写全部 12 个 colorXxx 字段，上方原版顶点颜色
+    // 直接被丢弃；返回 false 时原版结果原样保留，与旧字节码包装
+    // “if (!setupBlockSmoothing(...)) { 原版颜色计算 }” 行为一致。
+    // 槽位 9-12 的局部变量是逐顶点亮度系数（f3-f6），即 ASM 补丁用 FLOAD 9-12 加载的那四个值。
+
+    @Inject(
+        method = { "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
+            "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceYNeg(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
+            ordinal = 0))
+    private void mcpatcherforge$setupBlockSmoothingBottom(Block block, int x, int y, int z, float r, float g, float b,
+        CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
+        @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
+        ColorizeBlock.setupBlockSmoothing(
+            (RenderBlocks) (Object) this,
+            block,
+            this.blockAccess,
+            x,
+            y,
+            z,
+            0,
+            topLeft,
+            bottomLeft,
+            bottomRight,
+            topRight);
+    }
+
+    @Inject(
+        method = { "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
+            "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceYPos(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
+            ordinal = 0))
+    private void mcpatcherforge$setupBlockSmoothingTop(Block block, int x, int y, int z, float r, float g, float b,
+        CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
+        @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
+        ColorizeBlock.setupBlockSmoothing(
+            (RenderBlocks) (Object) this,
+            block,
+            this.blockAccess,
+            x,
+            y,
+            z,
+            1,
+            topLeft,
+            bottomLeft,
+            bottomRight,
+            topRight);
+    }
+
+    // For the four side faces ordinal 0 matters: the second renderFaceXxx call in each method is
+    // the fancy-grass overlay, which must keep operating on whatever colors are current.
+    // 四个侧面的 ordinal 0 很关键：每个方法里第二次 renderFaceXxx 调用是精细草地覆盖层，
+    // 它应继续基于当前颜色字段叠乘，不应再次触发平滑处理。
+
+    @Inject(
+        method = { "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
+            "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceZNeg(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
+            ordinal = 0))
+    private void mcpatcherforge$setupBlockSmoothingNorth(Block block, int x, int y, int z, float r, float g, float b,
+        CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
+        @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
+        ColorizeBlock.setupBlockSmoothing(
+            (RenderBlocks) (Object) this,
+            block,
+            this.blockAccess,
+            x,
+            y,
+            z,
+            2,
+            topLeft,
+            bottomLeft,
+            bottomRight,
+            topRight);
+    }
+
+    @Inject(
+        method = { "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
+            "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceZPos(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
+            ordinal = 0))
+    private void mcpatcherforge$setupBlockSmoothingSouth(Block block, int x, int y, int z, float r, float g, float b,
+        CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
+        @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
+        ColorizeBlock.setupBlockSmoothing(
+            (RenderBlocks) (Object) this,
+            block,
+            this.blockAccess,
+            x,
+            y,
+            z,
+            3,
+            topLeft,
+            bottomLeft,
+            bottomRight,
+            topRight);
+    }
+
+    @Inject(
+        method = { "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
+            "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceXNeg(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
+            ordinal = 0))
+    private void mcpatcherforge$setupBlockSmoothingWest(Block block, int x, int y, int z, float r, float g, float b,
+        CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
+        @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
+        ColorizeBlock.setupBlockSmoothing(
+            (RenderBlocks) (Object) this,
+            block,
+            this.blockAccess,
+            x,
+            y,
+            z,
+            4,
+            topLeft,
+            bottomLeft,
+            bottomRight,
+            topRight);
+    }
+
+    @Inject(
+        method = { "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
+            "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z" },
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceXPos(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
+            ordinal = 0))
+    private void mcpatcherforge$setupBlockSmoothingEast(Block block, int x, int y, int z, float r, float g, float b,
+        CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
+        @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
+        ColorizeBlock.setupBlockSmoothing(
+            (RenderBlocks) (Object) this,
+            block,
+            this.blockAccess,
+            x,
+            y,
+            z,
+            5,
+            topLeft,
+            bottomLeft,
+            bottomRight,
+            topRight);
     }
 
     @Redirect(
