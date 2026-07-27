@@ -70,8 +70,8 @@ public class TexturePackAPI {
         Set<String> namespaces = new HashSet<>();
         namespaces.add(DEFAULT_NAMESPACE);
         IResourceManager resourceManager = getResourceManager();
-        if (resourceManager instanceof SimpleReloadableResourceManager simpleReloadableResourceManager) {
-            namespaces.addAll(simpleReloadableResourceManager.domainResourceManagers.keySet());
+        if (resourceManager instanceof SimpleReloadableResourceManager) {
+            namespaces.addAll(((SimpleReloadableResourceManager) resourceManager).domainResourceManagers.keySet());
         }
         return namespaces;
     }
@@ -82,9 +82,9 @@ public class TexturePackAPI {
 
     public static InputStream getInputStream(ResourceLocation resource) {
         try {
-            if (resource instanceof ResourceLocationWithSource resourceLocationWithSource) {
+            if (resource instanceof ResourceLocationWithSource) {
                 try {
-                    return resourceLocationWithSource.getSource()
+                    return ((ResourceLocationWithSource) resource).getSource()
                         .getInputStream(resource);
                 } catch (IOException e) {}
             }

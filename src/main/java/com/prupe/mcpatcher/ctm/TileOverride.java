@@ -66,25 +66,47 @@ abstract class TileOverride implements ITileOverride {
         TileOverride override = null;
 
         switch (method) {
-            case "default", "glass", "ctm" -> override = new TileOverrideImpl.CTM(properties, tileLoader);
-            case "random" -> {
+            case "default":
+            case "glass":
+            case "ctm":
+                override = new TileOverrideImpl.CTM(properties, tileLoader);
+                break;
+            case "random":
                 override = new TileOverrideImpl.Random1(properties, tileLoader);
                 if (override.getNumberOfTiles() == 1) {
                     override = new TileOverrideImpl.Fixed(properties, tileLoader);
                 }
-            }
-            case "fixed", "static" -> override = new TileOverrideImpl.Fixed(properties, tileLoader);
-            case "bookshelf", "horizontal" -> override = new TileOverrideImpl.Horizontal(properties, tileLoader);
-            case "horizontal+vertical", "h+v" -> override = new TileOverrideImpl.HorizontalVertical(
-                properties,
-                tileLoader);
-            case "vertical" -> override = new TileOverrideImpl.Vertical(properties, tileLoader);
-            case "vertical+horizontal", "v+h" -> override = new TileOverrideImpl.VerticalHorizontal(
-                properties,
-                tileLoader);
-            case "sandstone", "top" -> override = new TileOverrideImpl.Top(properties, tileLoader);
-            case "repeat", "pattern" -> override = new TileOverrideImpl.Repeat(properties, tileLoader);
-            default -> properties.error("unknown method \"%s\"", method);
+                break;
+            case "fixed":
+            case "static":
+                override = new TileOverrideImpl.Fixed(properties, tileLoader);
+                break;
+            case "bookshelf":
+            case "horizontal":
+                override = new TileOverrideImpl.Horizontal(properties, tileLoader);
+                break;
+            case "horizontal+vertical":
+            case "h+v":
+                override = new TileOverrideImpl.HorizontalVertical(properties, tileLoader);
+                break;
+            case "vertical":
+                override = new TileOverrideImpl.Vertical(properties, tileLoader);
+                break;
+            case "vertical+horizontal":
+            case "v+h":
+                override = new TileOverrideImpl.VerticalHorizontal(properties, tileLoader);
+                break;
+            case "sandstone":
+            case "top":
+                override = new TileOverrideImpl.Top(properties, tileLoader);
+                break;
+            case "repeat":
+            case "pattern":
+                override = new TileOverrideImpl.Repeat(properties, tileLoader);
+                break;
+            default:
+                properties.error("unknown method \"%s\"", method);
+                break;
         }
 
         if (override != null && !properties.valid()) {
@@ -144,14 +166,22 @@ abstract class TileOverride implements ITileOverride {
         String connectType1 = properties.getString("connect", "")
             .toLowerCase();
         switch (connectType1) {
-            case "" -> connectType = matchTiles.isEmpty() ? CONNECT_BY_BLOCK : CONNECT_BY_TILE;
-            case "block" -> connectType = CONNECT_BY_BLOCK;
-            case "tile" -> connectType = CONNECT_BY_TILE;
-            case "material" -> connectType = CONNECT_BY_MATERIAL;
-            default -> {
+            case "":
+                connectType = matchTiles.isEmpty() ? CONNECT_BY_BLOCK : CONNECT_BY_TILE;
+                break;
+            case "block":
+                connectType = CONNECT_BY_BLOCK;
+                break;
+            case "tile":
+                connectType = CONNECT_BY_TILE;
+                break;
+            case "material":
+                connectType = CONNECT_BY_MATERIAL;
+                break;
+            default:
                 properties.error("invalid connect type %s", connectType1);
                 connectType = CONNECT_BY_BLOCK;
-            }
+                break;
         }
 
         innerSeams = properties.getBoolean("innerSeams", false);
@@ -401,12 +431,16 @@ abstract class TileOverride implements ITileOverride {
                 }
             }
         }
-        return switch (connectType) {
-            case CONNECT_BY_TILE -> renderBlockState.shouldConnectByTile(neighbor, icon, i, j, k);
-            case CONNECT_BY_BLOCK -> renderBlockState.shouldConnectByBlock(neighbor, i, j, k);
-            case CONNECT_BY_MATERIAL -> block.blockMaterial == neighbor.blockMaterial;
-            default -> false;
-        };
+        switch (connectType) {
+            case CONNECT_BY_TILE:
+                return renderBlockState.shouldConnectByTile(neighbor, icon, i, j, k);
+            case CONNECT_BY_BLOCK:
+                return renderBlockState.shouldConnectByBlock(neighbor, i, j, k);
+            case CONNECT_BY_MATERIAL:
+                return block.blockMaterial == neighbor.blockMaterial;
+            default:
+                return false;
+        }
     }
 
     @Override

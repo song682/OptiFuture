@@ -111,7 +111,8 @@ public abstract class MixinRenderEntityLiving extends Render {
             float f3 = this.interpolateRotation(entity.prevRotationYawHead, entity.rotationYawHead, p_76986_9_);
             float f4;
 
-            if (entity.isRiding() && entity.ridingEntity instanceof EntityLivingBase entitylivingbase1) {
+            if (entity.isRiding() && entity.ridingEntity instanceof EntityLivingBase) {
+                EntityLivingBase entitylivingbase1 = (EntityLivingBase) entity.ridingEntity;
                 f2 = this.interpolateRotation(
                     entitylivingbase1.prevRenderYawOffset,
                     entitylivingbase1.renderYawOffset,

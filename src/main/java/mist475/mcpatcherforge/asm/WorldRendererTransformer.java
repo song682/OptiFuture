@@ -87,8 +87,8 @@ public class WorldRendererTransformer implements IClassTransformer {
                             .getNext()
                             .getNext();
 
-                        if (trackingNode instanceof LineNumberNode lineNumberNode) {
-                            lineNumberShifter = lineNumberNode.line;
+                        if (trackingNode instanceof LineNumberNode) {
+                            lineNumberShifter = ((LineNumberNode) trackingNode).line;
                         }
 
                         if (trackingNode.getNext() instanceof VarInsnNode) {
@@ -99,8 +99,8 @@ public class WorldRendererTransformer implements IClassTransformer {
                         trackingNode = trackingNode.getNext()
                             .getNext();
 
-                        if (trackingNode instanceof VarInsnNode aLoadNode) {
-                            aLoadNode.var = 18;
+                        if (trackingNode instanceof VarInsnNode) {
+                            ((VarInsnNode) trackingNode).var = 18;
                         }
 
                         InsnList list1 = new InsnList();
@@ -160,9 +160,9 @@ public class WorldRendererTransformer implements IClassTransformer {
                     }
 
                     // shift lineNumber for instructions that are beyond the changes, leave identical otherwise
-                    if (beginInjected && node instanceof LineNumberNode lineNumberNode1
-                        && lineNumberNode1.line > lineNumberShifter) {
-                        lineNumberNode1.line -= 3;
+                    if (beginInjected && node instanceof LineNumberNode
+                        && ((LineNumberNode) node).line > lineNumberShifter) {
+                        ((LineNumberNode) node).line -= 3;
                     }
                 }
                 updateRendererHandled = true;
@@ -172,8 +172,8 @@ public class WorldRendererTransformer implements IClassTransformer {
             // shift line numbers for functions after updateRenderer
             if (updateRendererHandled) {
                 for (AbstractInsnNode node : methodNode.instructions.toArray()) {
-                    if (node instanceof LineNumberNode lineNumberNode) {
-                        lineNumberNode.line -= 3;
+                    if (node instanceof LineNumberNode) {
+                        ((LineNumberNode) node).line -= 3;
                     }
                 }
             }

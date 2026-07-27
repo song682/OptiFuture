@@ -77,34 +77,27 @@ public class BlendMethod {
         text = text.toLowerCase()
             .trim();
         switch (text) {
-            case "alpha" -> {
+            case "alpha":
                 return ALPHA;
-            }
-            case "add" -> {
+            case "add":
                 return ADD;
-            }
-            case "subtract" -> {
+            case "subtract":
                 return SUBTRACT;
-            }
-            case "multiply" -> {
+            case "multiply":
                 return MULTIPLY;
-            }
-            case "dodge" -> {
+            case "dodge":
                 return DODGE;
-            }
-            case "burn" -> {
+            case "burn":
                 return BURN;
-            }
-            case "screen" -> {
+            case "screen":
                 return SCREEN;
-            }
-            case "overlay", "color" -> {
+            case "overlay":
+            case "color":
                 return OVERLAY;
-            }
-            case "replace", "none" -> {
+            case "replace":
+            case "none":
                 return REPLACE;
-            }
-            default -> {
+            default:
                 String[] tokens = text.split("\\s+");
                 if (tokens.length >= 2) {
                     try {
@@ -120,7 +113,7 @@ public class BlendMethod {
                             0);
                     } catch (NumberFormatException e) {}
                 }
-            }
+                break;
         }
         return null;
     }

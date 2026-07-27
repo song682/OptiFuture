@@ -334,15 +334,30 @@ public class RenderBlocksTransformer implements IClassTransformer {
     // faces 1, 3-6 only differ on a single node
     private static Pair<InsnList, InsnList> getRenderBlocksIfWrapper(int face, int lineNumber1, int lineNumber2,
         boolean second) {
-        int iConst = switch (face) {
-            case 0 -> Opcodes.ICONST_0;
-            case 1 -> Opcodes.ICONST_1;
-            case 2 -> Opcodes.ICONST_2;
-            case 3 -> Opcodes.ICONST_3;
-            case 4 -> Opcodes.ICONST_4;
-            case 5 -> Opcodes.ICONST_5;
-            default -> 0;
-        };
+        int iConst;
+        switch (face) {
+            case 0:
+                iConst = Opcodes.ICONST_0;
+                break;
+            case 1:
+                iConst = Opcodes.ICONST_1;
+                break;
+            case 2:
+                iConst = Opcodes.ICONST_2;
+                break;
+            case 3:
+                iConst = Opcodes.ICONST_3;
+                break;
+            case 4:
+                iConst = Opcodes.ICONST_4;
+                break;
+            case 5:
+                iConst = Opcodes.ICONST_5;
+                break;
+            default:
+                iConst = 0;
+                break;
+        }
 
         final InsnList ifStart = new InsnList();
         ifStart.add(new VarInsnNode(Opcodes.ALOAD, 0));

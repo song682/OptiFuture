@@ -17,16 +17,33 @@ public class BlockFaceMatcher {
         int flags = 0;
         for (String face : values) {
             switch (face) {
-                case "bottom", "down" -> flags |= (1 << BOTTOM_FACE);
-                case "top", "up" -> flags |= (1 << TOP_FACE);
-                case "north" -> flags |= (1 << NORTH_FACE);
-                case "south" -> flags |= (1 << SOUTH_FACE);
-                case "east" -> flags |= (1 << EAST_FACE);
-                case "west" -> flags |= (1 << WEST_FACE);
-                case "side", "sides" -> flags |= (1 << NORTH_FACE) | (1 << SOUTH_FACE)
-                    | (1 << EAST_FACE)
-                    | (1 << WEST_FACE);
-                case "all" -> flags = -1;
+                case "bottom":
+                case "down":
+                    flags |= (1 << BOTTOM_FACE);
+                    break;
+                case "top":
+                case "up":
+                    flags |= (1 << TOP_FACE);
+                    break;
+                case "north":
+                    flags |= (1 << NORTH_FACE);
+                    break;
+                case "south":
+                    flags |= (1 << SOUTH_FACE);
+                    break;
+                case "east":
+                    flags |= (1 << EAST_FACE);
+                    break;
+                case "west":
+                    flags |= (1 << WEST_FACE);
+                    break;
+                case "side":
+                case "sides":
+                    flags |= (1 << NORTH_FACE) | (1 << SOUTH_FACE) | (1 << EAST_FACE) | (1 << WEST_FACE);
+                    break;
+                case "all":
+                    flags = -1;
+                    break;
             }
         }
         faces = flags;
