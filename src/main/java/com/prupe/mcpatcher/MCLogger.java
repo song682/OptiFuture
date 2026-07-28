@@ -45,15 +45,40 @@ public class MCLogger {
         this.logPrefix = logPrefix;
         logger = Logger.getLogger(category.name);
         MCPatcherForgeConfig config = MCPatcherForgeConfig.instance();
-        logger.setLevel(Level.parse(switch (category) {
-            case CUSTOM_COLORS -> config.customColorsLoggingLevel;
-            case CUSTOM_ITEM_TEXTURES -> config.customItemTexturesLoggingLevel;
-            case CONNECTED_TEXTURES -> config.connectedTexturesLoggingLevel;
-            case EXTENDED_HD -> config.extendedHDLoggingLevel;
-            case RANDOM_MOBS -> config.randomMobsLoggingLevel;
-            case BETTER_SKIES -> config.betterSkiesLoggingLevel;
-            default -> Level.INFO.getName();
-        }));
+        String levelName;
+        switch (category) {
+            case CUSTOM_COLORS:
+                levelName = config.customColorsLoggingLevel;
+                break;
+            case CUSTOM_ITEM_TEXTURES:
+                levelName = config.customItemTexturesLoggingLevel;
+                break;
+            case CONNECTED_TEXTURES:
+                levelName = config.connectedTexturesLoggingLevel;
+                break;
+            case EXTENDED_HD:
+                levelName = config.extendedHDLoggingLevel;
+                break;
+            case RANDOM_MOBS:
+                levelName = config.randomMobsLoggingLevel;
+                break;
+            case BETTER_SKIES:
+                levelName = config.betterSkiesLoggingLevel;
+                break;
+            case CUSTOM_ENTITY_MODELS:
+                levelName = config.customEntityModelsLoggingLevel;
+                break;
+            case CUSTOM_PANORAMA:
+                // Custom Panorama shares the Better Skies logging config since its toggle
+                // lives in the same category.
+                // 自定义全景图与 Better Skies 共用日志配置，因为其开关位于同一配置分类下。
+                levelName = config.betterSkiesLoggingLevel;
+                break;
+            default:
+                levelName = Level.INFO.getName();
+                break;
+        }
+        logger.setLevel(Level.parse(levelName));
 
         logger.setUseParentHandlers(false);
         logger.addHandler(new Handler() {
@@ -184,6 +209,8 @@ public class MCLogger {
         EXTENDED_HD(MCPatcherUtils.EXTENDED_HD),
         RANDOM_MOBS(MCPatcherUtils.RANDOM_MOBS),
         BETTER_SKIES(MCPatcherUtils.BETTER_SKIES),
+        CUSTOM_ENTITY_MODELS(MCPatcherUtils.CUSTOM_ENTITY_MODELS),
+        CUSTOM_PANORAMA(MCPatcherUtils.CUSTOM_PANORAMA),
         TEXTURE_PACK("Texture Pack"),
 
         TILESHEET("Tilesheet"),

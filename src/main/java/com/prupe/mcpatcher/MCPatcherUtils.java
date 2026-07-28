@@ -34,6 +34,8 @@ public class MCPatcherUtils {
     public static final String BETTER_GLASS = "Better Glass";
     public static final String CUSTOM_ITEM_TEXTURES = "Custom Item Textures";
     public static final String CUSTOM_ANIMATIONS = "Custom Animations";
+    public static final String CUSTOM_ENTITY_MODELS = "Custom Entity Models";
+    public static final String CUSTOM_PANORAMA = "Custom Panorama";
     public static final String MIPMAP = "Mipmap";
 
     public static final String RENDER_PASS_CLASS = "com.prupe.mcpatcher.renderpass.RenderPass";

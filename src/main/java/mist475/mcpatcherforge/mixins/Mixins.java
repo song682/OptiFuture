@@ -146,6 +146,16 @@ public enum Mixins {
         .addTargetedMod(TargetedMod.VANILLA)
         .addMixinClasses(addPrefix("sky.", "MixinEffectRenderer", "MixinRenderGlobal"))),
 
+    // Custom main menu panorama (background.properties), gated by the better skies module.
+    // 自定义主菜单全景图（background.properties），受 better skies 模块总开关控制。
+    CUSTOM_PANORAMA(new Builder("Custom Panorama").setSide(Side.CLIENT)
+        .setPhase(Phase.EARLY)
+        .setApplyIf(
+            () -> MCPatcherForgeConfig.instance().betterSkiesEnabled
+                && MCPatcherForgeConfig.instance().customPanorama)
+        .addTargetedMod(TargetedMod.VANILLA)
+        .addMixinClasses("gui.MixinGuiMainMenu")),
+
     CC_NO_CTM(new Builder("Custom colors, no connected textures").setSide(Side.CLIENT)
         .setPhase(Phase.EARLY)
         .setApplyIf(

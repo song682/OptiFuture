@@ -80,6 +80,17 @@ public class MCPatcherForgeConfig {
     public boolean brightenFireworks;
     public boolean skybox;
     public boolean unloadTextures;
+    /** Custom main menu panorama via background.properties. / 基于 background.properties 的自定义主菜单全景图。 */
+    public boolean customPanorama;
+
+    // CUSTOM_ENTITY_MODELS
+    // 自定义实体模型 (CEM)：加载 .jem/.jpm 模型并按动画表达式驱动。
+    public boolean customEntityModelsEnabled;
+    public String customEntityModelsLoggingLevel;
+    /** Enable per-frame animation expression evaluation. / 启用逐帧动画表达式求值。 */
+    public boolean cemAnimations;
+    /** Enable randomized alternative models via .properties rules. / 启用基于 .properties 的随机模型规则。 */
+    public boolean cemRandomModels;
 
     public enum Category {
 
@@ -88,7 +99,8 @@ public class MCPatcherForgeConfig {
         CONNECTED_TEXTURES,
         EXTENDED_HD,
         RANDOM_MOBS,
-        BETTER_SKIES;
+        BETTER_SKIES,
+        CUSTOM_ENTITY_MODELS;
 
         @Override
         public String toString() {
@@ -172,6 +184,12 @@ public class MCPatcherForgeConfig {
         brightenFireworks = config.get(Category.BETTER_SKIES.toString(),"brightenFireworks",true).getBoolean();
         skybox = config.get(Category.BETTER_SKIES.toString(),"skybox",true).getBoolean();
         unloadTextures = config.get(Category.BETTER_SKIES.toString(),"unloadTextures",true).getBoolean();
+        customPanorama = config.get(Category.BETTER_SKIES.toString(),"customPanorama",true,"Enable custom main menu panoramas (background.properties)").getBoolean();
+
+        customEntityModelsEnabled = config.get(Category.CUSTOM_ENTITY_MODELS.toString(),"enabled",true,"Enable the custom entity models module").getBoolean();
+        customEntityModelsLoggingLevel = config.get(Category.CUSTOM_ENTITY_MODELS.toString(),"logging",Level.INFO.getName(),"logging level").getString();
+        cemAnimations = config.get(Category.CUSTOM_ENTITY_MODELS.toString(),"animations",true).getBoolean();
+        cemRandomModels = config.get(Category.CUSTOM_ENTITY_MODELS.toString(),"randomModels",true).getBoolean();
 
         // spotless:on
         if (config.hasChanged()) config.save();
