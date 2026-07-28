@@ -1,7 +1,12 @@
 {
   "required": true,
-  "minVersion": "0.8.5-GTNH",
+  "minVersion": "0.8.5",
+  "compatibilityLevel": "JAVA_8",
+  "package": "mist475.mcpatcherforge.mixins.late",
+  "plugin": "mist475.mcpatcherforge.core.MCPatcherForgeMixinPlugin",
   "refmap": "mixins.mcpatcherforge.refmap.json",
   "target": "@env(DEFAULT)",
-  "compatibilityLevel": "JAVA_8"
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

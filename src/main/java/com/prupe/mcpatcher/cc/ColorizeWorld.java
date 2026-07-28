@@ -114,9 +114,15 @@ public class ColorizeWorld {
         String value = properties.getString("clouds", "")
             .toLowerCase();
         switch (value) {
-            case "fast" -> cloudType = CLOUDS_FAST;
-            case "fancy" -> cloudType = CLOUDS_FANCY;
-            case "none" -> cloudType = CLOUDS_NONE;
+            case "fast":
+                cloudType = CLOUDS_FAST;
+                break;
+            case "fancy":
+                cloudType = CLOUDS_FANCY;
+                break;
+            case "none":
+                cloudType = CLOUDS_NONE;
+                break;
         }
     }
 
@@ -200,11 +206,15 @@ public class ColorizeWorld {
     }
 
     public static boolean drawFancyClouds(boolean fancyGraphics) {
-        return switch (cloudType) {
-            case CLOUDS_NONE, CLOUDS_FAST -> false;
-            case CLOUDS_FANCY -> true;
-            default -> fancyGraphics;
-        };
+        switch (cloudType) {
+            case CLOUDS_NONE:
+            case CLOUDS_FAST:
+                return false;
+            case CLOUDS_FANCY:
+                return true;
+            default:
+                return fancyGraphics;
+        }
     }
 
     public static int colorizeText(int defaultColor) {
