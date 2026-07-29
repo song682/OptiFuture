@@ -126,7 +126,17 @@ public abstract class MixinFontRenderer implements FontRendererExpansion {
         return this.mcpatcher_forge$charWidthf[32];
     }
 
-    @ModifyConstant(method = "renderDefaultChar(IZ)F", constant = @Constant(floatValue = 1.0f))
+    // renderDefaultChar has five 1.0F constants: ordinal 0 is the italic shear (italic ? 1.0F : 0.0F)
+    // and must stay untouched, ordinals 1-4 are the "f3 - 1.0F" glyph width corrections that HD fonts
+    // replace with fontAdj. An unrestricted @ModifyConstant also zeroed the shear (fontAdj is 0 for
+    // HD fonts), breaking italic rendering.
+    // renderDefaultChar 内共有 5 处 1.0F 常量：ordinal 0 是斜体切变（italic ? 1.0F : 0.0F）
+    // 必须保持原样，ordinal 1-4 才是 HD 字体需要替换为 fontAdj 的 "f3 - 1.0F" 字宽修正。
+    // 无限定的 @ModifyConstant 会连带把切变归零（HD 字体时 fontAdj 为 0），导致斜体失效。
+    @ModifyConstant(
+        method = "renderDefaultChar(IZ)F",
+        constant = { @Constant(floatValue = 1.0f, ordinal = 1), @Constant(floatValue = 1.0f, ordinal = 2),
+            @Constant(floatValue = 1.0f, ordinal = 3), @Constant(floatValue = 1.0f, ordinal = 4) })
     private float modifyRenderDefaultChar1(float constant) {
         return this.mcpatcher_forge$fontAdj;
     }

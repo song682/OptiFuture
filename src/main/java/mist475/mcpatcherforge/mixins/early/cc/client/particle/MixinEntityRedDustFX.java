@@ -5,7 +5,6 @@ import net.minecraft.client.particle.EntityReddustFX;
 import net.minecraft.world.World;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -15,9 +14,6 @@ import com.prupe.mcpatcher.cc.Colorizer;
 
 @Mixin(EntityReddustFX.class)
 public abstract class MixinEntityRedDustFX extends EntityFX {
-
-    @Shadow
-    float reddustParticleScale;
 
     protected MixinEntityRedDustFX(World world, double x, double y, double z) {
         super(world, x, y, z);
@@ -41,11 +37,10 @@ public abstract class MixinEntityRedDustFX extends EntityFX {
         this.particleRed = ((float) (Math.random() * 0.20000000298023224D) + 0.8F) * red * f4;
         this.particleGreen = ((float) (Math.random() * 0.20000000298023224D) + 0.8F) * green * f4;
         this.particleBlue = ((float) (Math.random() * 0.20000000298023224D) + 0.8F) * blue * f4;
-        this.particleScale *= 0.75F;
-        this.particleScale *= p_i1224_8_;
-        this.reddustParticleScale = this.particleScale;
-        this.particleMaxAge = (int) (8.0D / (Math.random() * 0.8D + 0.2D));
-        this.particleMaxAge = (int) ((float) this.particleMaxAge * p_i1224_8_);
-        this.noClip = false;
+        // Only the color channels are recomputed here. Scale/maxAge/noClip were already set
+        // by the vanilla constructor; repeating the scale multiplications at RETURN would
+        // apply 0.75F and the scale parameter twice.
+        // 这里只重新计算颜色通道。scale/maxAge/noClip 原版构造器已经设置完毕；
+        // 在 RETURN 处重跑缩放乘算会把 0.75F 和 scale 参数乘两次。
     }
 }

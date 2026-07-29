@@ -162,7 +162,9 @@ public enum Mixins {
             () -> !MCPatcherForgeConfig.instance().connectedTexturesEnabled
                 && MCPatcherForgeConfig.instance().customColorsEnabled)
         .addTargetedMod(TargetedMod.VANILLA)
-        .addMixinClasses("cc_ctm.MixinRenderBlocksNoCTM")),
+        // Actual package is ctm_cc; the wrong cc_ctm prefix made this mixin fail to load.
+        // 实际包名为 ctm_cc；错误的 cc_ctm 前缀会导致该 mixin 无法加载。
+        .addMixinClasses("ctm_cc.MixinRenderBlocksNoCTM")),
 
     CTM_AND_CC(new Builder("Connected textures and Custom Colors enabled").setSide(Side.CLIENT)
         .setPhase(Phase.EARLY)

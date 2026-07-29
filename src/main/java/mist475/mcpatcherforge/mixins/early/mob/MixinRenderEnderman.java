@@ -26,6 +26,11 @@ public abstract class MixinRenderEnderman extends RenderLiving {
             target = "Lnet/minecraft/client/renderer/entity/RenderEnderman;bindTexture(Lnet/minecraft/util/ResourceLocation;)V"))
     private void modifyShouldRenderPass(RenderEnderman instance, ResourceLocation resourceLocation,
         EntityEnderman entity) {
-        MobRandomizer.randomTexture(entity, resourceLocation);
+        // Must actually bind the (possibly randomized) eyes texture; the redirect swallows
+        // the original bindTexture call, so dropping the result would leave the previously
+        // bound body texture active for the glow pass.
+        // 必须真正绑定（可能被随机化的）眼睛纹理：redirect 吞掉了原版的 bindTexture 调用，
+        // 若丢弃返回值，发光 pass 会沿用之前绑定的身体纹理。
+        this.bindTexture(MobRandomizer.randomTexture(entity, resourceLocation));
     }
 }

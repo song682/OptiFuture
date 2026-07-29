@@ -119,10 +119,18 @@ public abstract class MixinRenderItem extends Render {
      * Forge added a false && to the targeted if statement, this adds the entire statement back
      * TODO: target forges event render class instead & check compatibility
      */
+    // zLevel field accesses in the compiled method: += 50 (GET 0, PUT 1), ForgeHooksClient.renderInventoryItem
+    // arg (GET 2), -= 50 (GET 3, PUT 4); the dead "if (false && ...)" block is removed by javac.
+    // Ordinal 2 would inject BEFORE the item is rendered (GL_EQUAL depth test fails), so target ordinal 3
+    // to restore the glint right after rendering, where the vanilla block originally was.
+    // 编译后方法内 zLevel 字段访问序列：+= 50（GET 0、PUT 1）、ForgeHooksClient.renderInventoryItem
+    // 传参（GET 2）、-= 50（GET 3、PUT 4）；"if (false && ...)" 死代码块已被 javac 消除。
+    // ordinal 2 会注入到物品渲染之前（GL_EQUAL 深度测试必然失败），故改为 ordinal 3，
+    // 在渲染完成后、也就是原版光效代码块原来所在的位置恢复附魔光效。
     @SuppressWarnings("DuplicatedCode")
     @Inject(
         method = "renderItemAndEffectIntoGUI(Lnet/minecraft/client/gui/FontRenderer;Lnet/minecraft/client/renderer/texture/TextureManager;Lnet/minecraft/item/ItemStack;II)V",
-        at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/entity/RenderItem;zLevel:F", ordinal = 2))
+        at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/entity/RenderItem;zLevel:F", ordinal = 3))
     private void modifyRenderItemAndEffectIntoGUI2(FontRenderer fontRenderer, TextureManager manager,
         ItemStack itemStack, int x, int y, CallbackInfo ci) {
         if (!CITUtils.renderEnchantmentGUI(itemStack, x, y, this.zLevel) && itemStack.hasEffect(0)) {

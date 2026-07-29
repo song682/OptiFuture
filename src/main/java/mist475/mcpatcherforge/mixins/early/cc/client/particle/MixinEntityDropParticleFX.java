@@ -76,9 +76,20 @@ public abstract class MixinEntityDropParticleFX extends EntityFX {
             }
             // Patch end
         } else {
-            this.particleRed = 1.0F;
-            this.particleGreen = 16.0F / (float) (40 - this.bobTimer + 16);
-            this.particleBlue = 4.0F / (float) (40 - this.bobTimer + 8);
+            // Water drop branch: vanilla resets to (0.2, 0.3, 1.0) every tick; recompute the
+            // biome water color like the constructor does instead of the lava formula that
+            // was mistakenly copied here.
+            // 水滴分支：原版每 tick 重置为 (0.2, 0.3, 1.0)；这里按构造器的方式重新计算
+            // 群系水色，而不是之前误拷的岩浆颜色公式。
+            if (ColorizeBlock.computeWaterColor(true, (int) this.posX, (int) this.posY, (int) this.posZ)) {
+                this.particleRed = Colorizer.setColor[0];
+                this.particleGreen = Colorizer.setColor[1];
+                this.particleBlue = Colorizer.setColor[2];
+            } else {
+                this.particleRed = 0.2F;
+                this.particleGreen = 0.3F;
+                this.particleBlue = 1.0F;
+            }
         }
 
         this.motionY -= this.particleGravity;

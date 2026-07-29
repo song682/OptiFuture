@@ -9,7 +9,9 @@ import net.minecraft.world.IBlockAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
@@ -28,22 +30,19 @@ public abstract class MixinRenderBlocksNoCTM {
     @Shadow
     public abstract IIcon getBlockIconFromSideAndMetadata(Block block, int side, int meta);
 
-    // Redirect calls to this.getBlockIcon when possible
-
-    @Redirect(
-        method = "renderBlockLiquid(Lnet/minecraft/block/Block;III)Z",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/RenderBlocks;getBlockIconFromSideAndMetadata(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;",
-            ordinal = 0))
-    private IIcon mcpatcherforge$obtainFloatsAndRedirectToGetBlockIcon(RenderBlocks instance, Block block, int side,
-        int meta, Block specializedBlock, int x, int y, int z, @Share("red") LocalFloatRef red,
-        @Share("green") LocalFloatRef green, @Share("blue") LocalFloatRef blue) {
+    // Capture the block color multiplier at HEAD: the former capture inside the top-face
+    // icon call left the @Share refs at 0 whenever the top face was culled, blacking out
+    // the bottom face. Channel mapping matches vanilla: red = >>16, green = >>8, blue = &255.
+    // 在 HEAD 处捕获方块颜色乘数：旧实现在顶面图标调用内捕获，顶面被剔除时
+    // @Share 引用保持 0，导致底面全黑。通道映射与原版一致：red = >>16、green = >>8、blue = &255。
+    @Inject(method = "renderBlockLiquid(Lnet/minecraft/block/Block;III)Z", at = @At("HEAD"))
+    private void mcpatcherforge$captureColorMultiplier(Block block, int x, int y, int z,
+        CallbackInfoReturnable<Boolean> cir, @Share("red") LocalFloatRef red, @Share("green") LocalFloatRef green,
+        @Share("blue") LocalFloatRef blue) {
         int l = block.colorMultiplier(this.blockAccess, x, y, z);
         red.set((float) (l >> 16 & 255) / 255.0F);
-        blue.set((float) (l >> 8 & 255) / 255.0F);
-        green.set((float) (l & 255) / 255.0F);
-        return this.getBlockIconFromSideAndMetadata(block, side, meta);
+        green.set((float) (l >> 8 & 255) / 255.0F);
+        blue.set((float) (l & 255) / 255.0F);
     }
 
     // Capture needed value
@@ -90,7 +89,9 @@ public abstract class MixinRenderBlocksNoCTM {
         @Share("blue") LocalFloatRef blueLocal) {
         if (!(ColorizeBlock.isSmooth = ColorizeBlock
             .setupBlockSmoothing((RenderBlocks) (Object) this, block, this.blockAccess, x, y, z, 6))) {
-            tessellator.setColorOpaque_F(red * redLocal.get(), green * blueLocal.get(), blue * blueLocal.get());
+            // Each channel must use its own captured multiplier (green previously used blue).
+            // 每个通道必须乘各自捕获的乘数（旧实现的绿通道误用了蓝通道）。
+            tessellator.setColorOpaque_F(red * redLocal.get(), green * greenLocal.get(), blue * blueLocal.get());
         }
         if (ColorizeBlock.isSmooth) {
             this.enableAO = true;

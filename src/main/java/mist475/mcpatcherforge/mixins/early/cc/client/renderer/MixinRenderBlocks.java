@@ -545,17 +545,45 @@ public abstract class MixinRenderBlocks {
             RenderBlocksUtils.getColorMultiplierBlue(5));
     }
 
+    /**
+     * Applies smooth biome colors to one face of the falling-sand cube. renderBlockSandFalling
+     * renders with enableAO disabled, so the per-vertex colors written by setupBlockSmoothing
+     * are collapsed into a single flat color; the four-vertex average already contains the
+     * vanilla per-face brightness via AO_BASE.
+     * 为下落沙块的单个面应用平滑群系颜色。renderBlockSandFalling 在 enableAO 关闭状态下渲染，
+     * 因此把 setupBlockSmoothing 写入的四顶点颜色取均值折算成一个纯色；
+     * 均值中已经由 AO_BASE 包含了原版的逐面亮度系数。
+     */
+    @Unique
+    private boolean mcpatcherforge$smoothSandFallingFace(Tessellator tessellator, World world, Block block, int x,
+        int y, int z, int face) {
+        if (!ColorizeBlock.setupBlockSmoothing((RenderBlocks) (Object) this, block, world, x, y, z, face)) {
+            return false;
+        }
+        tessellator.setColorOpaque_F(
+            (this.colorRedTopLeft + this.colorRedBottomLeft + this.colorRedBottomRight + this.colorRedTopRight)
+                / 4.0f,
+            (this.colorGreenTopLeft + this.colorGreenBottomLeft + this.colorGreenBottomRight + this.colorGreenTopRight)
+                / 4.0f,
+            (this.colorBlueTopLeft + this.colorBlueBottomLeft + this.colorBlueBottomRight + this.colorBlueTopRight)
+                / 4.0f);
+        return true;
+    }
+
     // If I was able to access ordinal number the duplication wouldn't be necessary
+    // Handler args: wrapped setColorOpaque_F args (colors, NOT coordinates!) + target method
+    // parameter prefix (Block, World, x, y, z).
+    // 处理器参数：被包裹的 setColorOpaque_F 参数（是颜色，不是坐标！）+ 目标方法参数前缀
+    // （Block、World、x、y、z）。
     @WrapWithCondition(
         method = "renderBlockSandFalling(Lnet/minecraft/block/Block;Lnet/minecraft/world/World;IIII)V",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 0))
-    private boolean modifyRenderBlockSandFalling0(Tessellator tessellator, float x, float y, float z, Block block,
-        World world) {
-        return !ColorizeBlock
-            .setupBlockSmoothing((RenderBlocks) (Object) this, block, this.blockAccess, (int) x, (int) y, (int) z, 0);
+    private boolean modifyRenderBlockSandFalling0(Tessellator tessellator, float red, float green, float blue,
+        Block block, World world, int x, int y, int z) {
+        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 0);
     }
 
     @WrapWithCondition(
@@ -564,10 +592,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 1))
-    private boolean modifyRenderBlockSandFalling1(Tessellator tessellator, float x, float y, float z, Block block,
-        World world) {
-        return !ColorizeBlock
-            .setupBlockSmoothing((RenderBlocks) (Object) this, block, this.blockAccess, (int) x, (int) y, (int) z, 1);
+    private boolean modifyRenderBlockSandFalling1(Tessellator tessellator, float red, float green, float blue,
+        Block block, World world, int x, int y, int z) {
+        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 1);
     }
 
     @WrapWithCondition(
@@ -576,10 +603,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 2))
-    private boolean modifyRenderBlockSandFalling2(Tessellator tessellator, float x, float y, float z, Block block,
-        World world) {
-        return !ColorizeBlock
-            .setupBlockSmoothing((RenderBlocks) (Object) this, block, this.blockAccess, (int) x, (int) y, (int) z, 2);
+    private boolean modifyRenderBlockSandFalling2(Tessellator tessellator, float red, float green, float blue,
+        Block block, World world, int x, int y, int z) {
+        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 2);
     }
 
     @WrapWithCondition(
@@ -588,10 +614,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 3))
-    private boolean modifyRenderBlockSandFalling3(Tessellator tessellator, float x, float y, float z, Block block,
-        World world) {
-        return !ColorizeBlock
-            .setupBlockSmoothing((RenderBlocks) (Object) this, block, this.blockAccess, (int) x, (int) y, (int) z, 3);
+    private boolean modifyRenderBlockSandFalling3(Tessellator tessellator, float red, float green, float blue,
+        Block block, World world, int x, int y, int z) {
+        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 3);
     }
 
     @WrapWithCondition(
@@ -600,10 +625,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 4))
-    private boolean modifyRenderBlockSandFalling4(Tessellator tessellator, float x, float y, float z, Block block,
-        World world) {
-        return !ColorizeBlock
-            .setupBlockSmoothing((RenderBlocks) (Object) this, block, this.blockAccess, (int) x, (int) y, (int) z, 4);
+    private boolean modifyRenderBlockSandFalling4(Tessellator tessellator, float red, float green, float blue,
+        Block block, World world, int x, int y, int z) {
+        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 4);
     }
 
     @WrapWithCondition(
@@ -612,10 +636,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 5))
-    private boolean modifyRenderBlockSandFalling5(Tessellator tessellator, float x, float y, float z, Block block,
-        World world) {
-        return !ColorizeBlock
-            .setupBlockSmoothing((RenderBlocks) (Object) this, block, this.blockAccess, (int) x, (int) y, (int) z, 5);
+    private boolean modifyRenderBlockSandFalling5(Tessellator tessellator, float red, float green, float blue,
+        Block block, World world, int x, int y, int z) {
+        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 5);
     }
 
     @Redirect(
@@ -798,8 +821,14 @@ public abstract class MixinRenderBlocks {
         method = "renderBlockLiquid(Lnet/minecraft/block/Block;III)Z",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceYNeg(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V"))
+            target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceYNeg(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
+            shift = At.Shift.AFTER))
     private void mcpatcherforge$setEnableAO(Block block, int x, int y, int z, CallbackInfoReturnable<Boolean> cir) {
+        // Reset AFTER renderFaceYNeg: the ctm_cc redirect enables AO right before the call so
+        // the bottom face uses per-vertex smoothed colors; resetting before the call (no shift)
+        // would nullify that.
+        // 在 renderFaceYNeg 之后复位：ctm_cc 的 redirect 会在调用前打开 AO，
+        // 使底面使用逐顶点平滑颜色；若在调用前复位（无 shift）会直接抵消该效果。
         this.enableAO = false;
     }
 
