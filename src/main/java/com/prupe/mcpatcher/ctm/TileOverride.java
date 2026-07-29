@@ -65,11 +65,24 @@ abstract class TileOverride implements ITileOverride {
             .toLowerCase();
         TileOverride override = null;
 
+        // Overlay methods render through the Better Glass OVERLAY pass by default;
+        // force it here (before construction) unless the renderPass is set explicitly.
+        // overlay 系列方法默认通过 Better Glass 的 OVERLAY 通道渲染；
+        // 若未显式设置 renderPass，则在构造前强制注入。
+        if (method.startsWith("overlay") && properties.getString("renderPass", "")
+            .isEmpty()) {
+            properties.setProperty("renderPass", "overlay");
+        }
+
         switch (method) {
             case "default":
             case "glass":
             case "ctm":
                 override = new TileOverrideImpl.CTM(properties, tileLoader);
+                break;
+            case "ctm_compact":
+            case "compact":
+                override = new TileOverrideImpl.CTMCompact(properties, tileLoader);
                 break;
             case "random":
                 override = new TileOverrideImpl.Random1(properties, tileLoader);
@@ -103,6 +116,32 @@ abstract class TileOverride implements ITileOverride {
             case "repeat":
             case "pattern":
                 override = new TileOverrideImpl.Repeat(properties, tileLoader);
+                break;
+            case "overlay_ctm":
+                override = new TileOverrideImpl.OverlayCTM(properties, tileLoader);
+                break;
+            case "overlay_random":
+                override = new TileOverrideImpl.OverlayRandom(properties, tileLoader);
+                break;
+            case "overlay_repeat":
+                override = new TileOverrideImpl.OverlayRepeat(properties, tileLoader);
+                break;
+            case "overlay_fixed":
+                override = new TileOverrideImpl.OverlayFixed(properties, tileLoader);
+                break;
+            case "overlay_horizontal":
+                override = new TileOverrideImpl.OverlayHorizontal(properties, tileLoader);
+                break;
+            case "overlay_vertical":
+                override = new TileOverrideImpl.OverlayVertical(properties, tileLoader);
+                break;
+            case "overlay_horizontal+vertical":
+            case "overlay_h+v":
+                override = new TileOverrideImpl.OverlayHorizontalVertical(properties, tileLoader);
+                break;
+            case "overlay_vertical+horizontal":
+            case "overlay_v+h":
+                override = new TileOverrideImpl.OverlayVerticalHorizontal(properties, tileLoader);
                 break;
             default:
                 properties.error("unknown method \"%s\"", method);
@@ -321,6 +360,16 @@ abstract class TileOverride implements ITileOverride {
 
     protected int getNumberOfTiles() {
         return tileNames.size();
+    }
+
+    /**
+     * Access to the mutable tile name list for subclasses that rewrite the tile map
+     * after loading (e.g. ctm_compact baking 5 source tiles into 47 tiles).
+     * 供加载后需要重写贴图表的子类访问可变贴图名列表
+     * （例如 ctm_compact 将 5 张基础贴图烘焙为 47 张）。
+     */
+    protected List<ResourceLocation> getTileNames() {
+        return tileNames;
     }
 
     String checkTileMap() {

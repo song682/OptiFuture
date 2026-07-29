@@ -14,6 +14,7 @@ import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.ResourceLocation;
 
@@ -46,6 +47,9 @@ public class TileLoader {
     private final Map<String, TextureAtlasSprite> baseTexturesByName = new HashMap<>();
     private final Set<ResourceLocation> tilesToRegister = new HashSet<>();
     private final Map<ResourceLocation, BufferedImage> tileImages = new HashMap<>();
+    // Tiles whose pixels are generated in memory rather than loaded from a resource pack file
+    // 像素由内存生成而非从资源包文件加载的贴图（例如 ctm_compact 烘焙出的贴图）
+    private final Set<ResourceLocation> generatedTiles = new HashSet<>();
     private final Map<String, IIcon> iconMap = new HashMap<>();
 
     static {
@@ -206,7 +210,14 @@ public class TileLoader {
         if (value.equals("blank")) {
             return blankResource;
         }
-        if (value.equals("null") || value.equals("none") || value.equals("default") || value.isEmpty()) {
+        // <skip> and <default> are placeholders used by overlay methods; both map to
+        // "no override for this ctm index" in the icon-swap architecture
+        // <skip> 与 <default> 是 overlay 方法使用的占位符；在图标替换架构下均表示"该索引不覆盖"
+        if (value.equals("null") || value.equals("none")
+            || value.equals("default")
+            || value.equals("<skip>")
+            || value.equals("<default>")
+            || value.isEmpty()) {
             return null;
         }
         if (!value.endsWith(".png")) {
@@ -239,6 +250,33 @@ public class TileLoader {
 
     public boolean preloadTile(ResourceLocation resource, boolean alternate) {
         return preloadTile(resource, alternate, null);
+    }
+
+    /**
+     * Preload a procedurally generated tile image (e.g. tiles baked by the ctm_compact method).
+     * The image is registered later through a custom sprite so no backing resource file is needed.
+     * 预加载程序生成的贴图（例如 ctm_compact 方法烘焙出的贴图）。
+     * 该图像稍后通过自定义精灵注册，因此不需要对应的资源包文件。
+     */
+    public boolean preloadGeneratedTile(ResourceLocation resource, BufferedImage image) {
+        if (tileImages.containsKey(resource)) {
+            return true;
+        }
+        if (image == null) {
+            return false;
+        }
+        tilesToRegister.add(resource);
+        tileImages.put(resource, image);
+        generatedTiles.add(resource);
+        return true;
+    }
+
+    /**
+     * Get the preloaded image for a tile, or null if not preloaded.
+     * 获取贴图对应的预加载图像，未预加载时返回 null。
+     */
+    public BufferedImage getTileImage(ResourceLocation resource) {
+        return resource == null ? null : tileImages.get(resource);
     }
 
     protected boolean isForThisMap(String mapName) {
@@ -288,7 +326,21 @@ public class TileLoader {
                 return false;
             }
         }
-        IIcon icon = textureMap.registerIcon(name);
+        IIcon icon;
+        if (generatedTiles.contains(resource)) {
+            // Generated tiles have no backing resource file; register a custom sprite that
+            // loads its pixels from the in-memory image via the hasCustomLoader/load hooks.
+            // 生成贴图没有对应的资源文件，注册自定义精灵，通过 hasCustomLoader/load 钩子从内存图像加载像素。
+            TextureAtlasSprite sprite = new GeneratedTextureAtlasSprite(name, image);
+            if (textureMap.setTextureEntry(name, sprite)) {
+                icon = sprite;
+            } else {
+                subLogger.warning("%s already registered, falling back to default icon loading", name);
+                icon = textureMap.registerIcon(name);
+            }
+        } else {
+            icon = textureMap.registerIcon(name);
+        }
         map.put(name, (TextureAtlasSprite) icon);
         iconMap.put(name, icon);
         String extra = (width == height ? "" : ", " + (height / width) + " frames");
@@ -300,6 +352,7 @@ public class TileLoader {
     public void finish() {
         tilesToRegister.clear();
         tileImages.clear();
+        generatedTiles.clear();
     }
 
     public IIcon getIcon(String name) {
@@ -315,5 +368,39 @@ public class TileLoader {
 
     public IIcon getIcon(ResourceLocation resource) {
         return resource == null ? null : getIcon(resource.toString());
+    }
+
+    /**
+     * Sprite backed by an in-memory image instead of a resource pack file.
+     * TextureMap calls hasCustomLoader/load during loadTextureAtlas; returning false from
+     * load() tells TextureMap to add this sprite to the stitcher (inverted Forge convention).
+     * 由内存图像而非资源包文件支撑的精灵。
+     * TextureMap 在 loadTextureAtlas 中调用 hasCustomLoader/load；load() 返回 false
+     * 表示让 TextureMap 将此精灵加入拼合器（Forge 的反向约定）。
+     */
+    private static final class GeneratedTextureAtlasSprite extends TextureAtlasSprite {
+
+        private final BufferedImage image;
+
+        GeneratedTextureAtlasSprite(String name, BufferedImage image) {
+            super(name);
+            this.image = image;
+        }
+
+        @Override
+        public boolean hasCustomLoader(IResourceManager manager, ResourceLocation location) {
+            return true;
+        }
+
+        @Override
+        public boolean load(IResourceManager manager, ResourceLocation location) {
+            // Match the anisotropic filtering setting used by the texture map; mipmaps are
+            // generated later by TextureMap.loadTextureAtlas for all registered sprites.
+            // 与贴图集使用的各向异性过滤设置保持一致；mipmap 稍后由
+            // TextureMap.loadTextureAtlas 统一为所有已注册精灵生成。
+            boolean anisotropic = Minecraft.getMinecraft().gameSettings.anisotropicFiltering > 1;
+            loadSprite(new BufferedImage[] { image }, null, anisotropic);
+            return false;
+        }
     }
 }
