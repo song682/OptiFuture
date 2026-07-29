@@ -117,6 +117,9 @@ abstract class TileOverride implements ITileOverride {
             case "pattern":
                 override = new TileOverrideImpl.Repeat(properties, tileLoader);
                 break;
+            case "overlay":
+                override = new TileOverrideImpl.Overlay(properties, tileLoader);
+                break;
             case "overlay_ctm":
                 override = new TileOverrideImpl.OverlayCTM(properties, tileLoader);
                 break;
@@ -305,7 +308,13 @@ abstract class TileOverride implements ITileOverride {
         }
     }
 
-    private List<BlockStateMatcher> getBlockList(String property, String defaultMetadata) {
+    /**
+     * Parse a whitespace-separated block list into matchers. Also used by subclasses
+     * to parse additional block list properties (e.g. connectBlocks for method=overlay).
+     * 将空格分隔的方块列表解析为匹配器。子类也用它解析其他方块列表属性
+     * （例如 method=overlay 的 connectBlocks）。
+     */
+    protected List<BlockStateMatcher> getBlockList(String property, String defaultMetadata) {
         List<BlockStateMatcher> blocks = new ArrayList<>();
         if (!MCPatcherUtils.isNullOrEmpty(defaultMetadata)) {
             defaultMetadata = ':' + defaultMetadata;
@@ -337,7 +346,13 @@ abstract class TileOverride implements ITileOverride {
         return blocks;
     }
 
-    private Set<String> getTileList(String key) {
+    /**
+     * Parse a whitespace-separated tile name list property. Also used by subclasses
+     * to parse additional tile list properties (e.g. connectTiles for method=overlay).
+     * 解析空格分隔的贴图名列表属性。子类也用它解析其他贴图列表属性
+     * （例如 method=overlay 的 connectTiles）。
+     */
+    protected Set<String> getTileList(String key) {
         Set<String> list = new HashSet<>();
         String property = properties.getString(key, "");
         for (String token : property.split("\\s+")) {

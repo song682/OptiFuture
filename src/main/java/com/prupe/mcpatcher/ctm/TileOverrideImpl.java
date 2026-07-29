@@ -1,6 +1,7 @@
 package com.prupe.mcpatcher.ctm;
 
 import static com.prupe.mcpatcher.ctm.RenderBlockState.EAST_FACE;
+import static com.prupe.mcpatcher.ctm.RenderBlockState.NORMALS;
 import static com.prupe.mcpatcher.ctm.RenderBlockState.NORTH_FACE;
 import static com.prupe.mcpatcher.ctm.RenderBlockState.REL_D;
 import static com.prupe.mcpatcher.ctm.RenderBlockState.REL_DL;
@@ -16,14 +17,21 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.IBlockAccess;
 
+import com.prupe.mcpatcher.mal.block.BlockAPI;
+import com.prupe.mcpatcher.mal.block.BlockStateMatcher;
 import com.prupe.mcpatcher.mal.resource.PropertiesFile;
 import com.prupe.mcpatcher.mal.tile.TileLoader;
 import com.prupe.mcpatcher.mal.util.WeightedIndex;
@@ -723,6 +731,405 @@ class TileOverrideImpl {
         @Override
         IIcon getTileHeld_Impl(RenderBlockState renderBlockState, IIcon origIcon) {
             return icons[0];
+        }
+    }
+
+    /**
+     * Block transition overlays (method=overlay).
+     * Draws border textures from a 17-tile template on the faces of matched blocks
+     * where they touch "connecting" neighbor blocks (connectBlocks/connectTiles),
+     * e.g. grass edges creeping onto adjacent dirt.
+     * OptiFine renders up to four independent border quads per face; this icon-swap
+     * port instead enumerates every neighbor flag combination at load time, bakes
+     * each distinct tile stack into a single composite tile (reusing the generated
+     * tile pipeline introduced for ctm_compact), and looks the result up per face
+     * at render time. Rendering goes through the Better Glass OVERLAY pass.
+     * 方块间过渡叠加（method=overlay）。
+     * 在匹配方块紧邻“连接目标”方块（connectBlocks/connectTiles）的面上，
+     * 用 17 瓦片模板绘制边框纹理，例如草皮边缘蔓延到相邻泥土上。
+     * OptiFine 单面最多叠加四张独立边框 quad；本图标替换架构的移植改为
+     * 加载期枚举全部邻居标志组合，把每种不同的瓦片叠加序列烘焙成单张
+     * 合成贴图（复用 ctm_compact 引入的生成贴图管线），渲染时按面查表。
+     * 渲染经由 Better Glass 的 OVERLAY 通道。
+     */
+    final static class Overlay extends TileOverride {
+
+        // 17-tile template semantics (indices into the source tile list).
+        // Neighbor flag layout mirrors the base CTM relative directions:
+        // edges = {left, right, down, up}, corners = {down-right, down-left, up-right, up-left},
+        // matching the order OptiFine uses in getConnectedTextureOverlay.
+        // 17 瓦片模板语义（索引指向源贴图列表）。
+        // 邻居标志布局与基础 CTM 的相对方向一致：
+        // 边 = {左, 右, 下, 上}，角 = {右下, 左下, 右上, 左上}，
+        // 与 OptiFine getConnectedTextureOverlay 的遍历顺序相同。
+        private static final int NUM_OVERLAY_TILES = 17;
+
+        private static final int EDGE_LEFT = 0;
+        private static final int EDGE_RIGHT = 1;
+        private static final int EDGE_DOWN = 2;
+        private static final int EDGE_UP = 3;
+        private static final int CORNER_DR = 0;
+        private static final int CORNER_DL = 1;
+        private static final int CORNER_UR = 2;
+        private static final int CORNER_UL = 3;
+
+        // Relative directions for the four edge and four corner neighbors, indexed as above
+        // 四个边邻居与四个角邻居的相对方向，按上述索引排列
+        private static final int[] EDGE_DIRECTIONS = new int[] { REL_L, REL_R, REL_D, REL_U };
+        private static final int[] CORNER_DIRECTIONS = new int[] { REL_DR, REL_DL, REL_UR, REL_UL };
+
+        private final PropertiesFile properties;
+        private final TileLoader tileLoader;
+        private final int sourceTileCount;
+        // Neighbor matching criteria for the overlay source (the block whose texture creeps over)
+        // 叠加源（纹理向外蔓延的那种方块）的邻居匹配条件
+        private final List<BlockStateMatcher> connectBlocks;
+        private final Set<String> connectTiles;
+
+        // flagsToIcon[edgeBits | cornerBits << 4 | matchBits << 8] = icon index into icons[], or -1 for none
+        // flagsToIcon[边标志 | 角标志 << 4 | 同类标志 << 8] = icons[] 的索引，-1 表示无叠加
+        private final int[] flagsToIcon = new int[4096];
+
+        Overlay(PropertiesFile properties, TileLoader tileLoader) {
+            super(properties, tileLoader);
+            this.properties = properties;
+            this.tileLoader = tileLoader;
+            sourceTileCount = getNumberOfTiles();
+            connectBlocks = getBlockList(properties.getString("connectBlocks", ""), "");
+            connectTiles = getTileList("connectTiles");
+            if (sourceTileCount < NUM_OVERLAY_TILES) {
+                properties.error("overlay requires at least 17 tiles");
+            } else if (properties.valid()) {
+                bakeOverlayTiles();
+            }
+        }
+
+        @Override
+        String getMethod() {
+            return "overlay";
+        }
+
+        @Override
+        String checkTileMap() {
+            if (sourceTileCount >= NUM_OVERLAY_TILES) {
+                return null;
+            } else {
+                return "requires at least 17 tiles";
+            }
+        }
+
+        @Override
+        boolean requiresFace() {
+            return true;
+        }
+
+        /**
+         * Enumerate all 4096 neighbor flag combinations, compute the tile stack OptiFine
+         * would draw for each, and bake every distinct non-empty stack into one composite
+         * tile. Single-tile stacks reuse the source tile directly (keeping animations).
+         * 枚举全部 4096 种邻居标志组合，计算 OptiFine 在每种组合下会绘制的瓦片
+         * 叠加序列，并把每个不同的非空序列烘焙成一张合成贴图。
+         * 单瓦片序列直接复用源贴图（保留动画支持）。
+         */
+        private void bakeOverlayTiles() {
+            List<ResourceLocation> tileNames = getTileNames();
+            List<ResourceLocation> sources = new ArrayList<>(tileNames);
+            ResourceLocation propertiesResource = properties.getResource();
+            String basePath = propertiesResource.getResourcePath()
+                .replaceFirst("\\.properties$", "");
+            // tile stack key (e.g. "3,16") -> index into the rewritten tile list
+            // 瓦片叠加序列键（如 "3,16"）-> 重写后贴图列表的索引
+            Map<String, Integer> stackToIndex = new HashMap<>();
+            List<ResourceLocation> baked = new ArrayList<>();
+            Arrays.fill(flagsToIcon, -1);
+            for (int flags = 0; flags < 4096; flags++) {
+                List<Integer> stack = computeTileStack(flags & 0xf, (flags >> 4) & 0xf, (flags >> 8) & 0xf);
+                // Drop tiles explicitly skipped via <skip> in the tiles list
+                // 丢弃 tiles 列表中通过 <skip> 显式跳过的瓦片
+                stack.removeIf(tile -> sources.get(tile) == null);
+                if (stack.isEmpty()) {
+                    continue;
+                }
+                StringBuilder key = new StringBuilder();
+                for (int tile : stack) {
+                    if (key.length() > 0) {
+                        key.append(',');
+                    }
+                    key.append(tile);
+                }
+                Integer index = stackToIndex.get(key.toString());
+                if (index == null) {
+                    ResourceLocation name;
+                    if (stack.size() == 1) {
+                        name = sources.get(stack.get(0));
+                    } else {
+                        name = new ResourceLocation(
+                            propertiesResource.getResourceDomain(),
+                            basePath + "_overlay_" + key.toString()
+                                .replace(',', '_') + ".png");
+                        BufferedImage image = composeStack(sources, stack);
+                        if (image == null || !tileLoader.preloadGeneratedTile(name, image)) {
+                            properties.warning("could not bake overlay tile %s", name);
+                            name = sources.get(stack.get(0));
+                        }
+                    }
+                    index = baked.size();
+                    baked.add(name);
+                    stackToIndex.put(key.toString(), index);
+                }
+                flagsToIcon[flags] = index;
+            }
+            tileNames.clear();
+            tileNames.addAll(baked);
+        }
+
+        /**
+         * Port of OptiFine's getConnectedTextureOverlay tile selection: given the edge,
+         * corner and same-block-matching neighbor flags of one face, return the template
+         * tile indices to stack, in drawing order.
+         * 移植 OptiFine getConnectedTextureOverlay 的选瓦逻辑：给定单面的边、角、
+         * 同类匹配三组邻居标志，返回按绘制顺序叠加的模板瓦片索引。
+         */
+        private static List<Integer> computeTileStack(int edgeBits, int cornerBits, int matchBits) {
+            List<Integer> stack = new ArrayList<>();
+            boolean l = (edgeBits & (1 << EDGE_LEFT)) != 0;
+            boolean r = (edgeBits & (1 << EDGE_RIGHT)) != 0;
+            boolean d = (edgeBits & (1 << EDGE_DOWN)) != 0;
+            boolean u = (edgeBits & (1 << EDGE_UP)) != 0;
+            boolean dr = (cornerBits & (1 << CORNER_DR)) != 0;
+            boolean dl = (cornerBits & (1 << CORNER_DL)) != 0;
+            boolean ur = (cornerBits & (1 << CORNER_UR)) != 0;
+            boolean ul = (cornerBits & (1 << CORNER_UL)) != 0;
+            boolean ml = (matchBits & (1 << EDGE_LEFT)) != 0;
+            boolean mr = (matchBits & (1 << EDGE_RIGHT)) != 0;
+            boolean md = (matchBits & (1 << EDGE_DOWN)) != 0;
+            boolean mu = (matchBits & (1 << EDGE_UP)) != 0;
+            if (l && r && d && u) {
+                stack.add(8);
+            } else if (l && r && d) {
+                stack.add(5);
+            } else if (l && d && u) {
+                stack.add(6);
+            } else if (r && d && u) {
+                stack.add(12);
+            } else if (l && r && u) {
+                stack.add(13);
+            } else if (r && d) {
+                stack.add(3);
+                if (ul) {
+                    stack.add(16);
+                }
+            } else if (l && d) {
+                stack.add(4);
+                if (ur) {
+                    stack.add(14);
+                }
+            } else if (r && u) {
+                stack.add(10);
+                if (dl) {
+                    stack.add(2);
+                }
+            } else if (l && u) {
+                stack.add(11);
+                if (dr) {
+                    stack.add(0);
+                }
+            } else {
+                if (l) {
+                    stack.add(9);
+                }
+                if (r) {
+                    stack.add(7);
+                }
+                if (d) {
+                    stack.add(1);
+                }
+                if (u) {
+                    stack.add(15);
+                }
+                if (dr && (mr || md) && !r && !d) {
+                    stack.add(0);
+                }
+                if (dl && (ml || md) && !l && !d) {
+                    stack.add(2);
+                }
+                if (ur && (mr || mu) && !r && !u) {
+                    stack.add(14);
+                }
+                if (ul && (ml || mu) && !l && !u) {
+                    stack.add(16);
+                }
+            }
+            return stack;
+        }
+
+        /**
+         * Alpha-composite the given template tiles (first animation frame each) in order.
+         * 按顺序将给定模板瓦片（各取动画首帧）以 alpha 混合叠加合成。
+         */
+        private BufferedImage composeStack(List<ResourceLocation> sources, List<Integer> stack) {
+            int size = 0;
+            for (int tile : stack) {
+                BufferedImage source = tileLoader.getTileImage(sources.get(tile));
+                if (source == null) {
+                    return null;
+                }
+                size = Math.max(size, Math.min(source.getWidth(), source.getHeight()));
+            }
+            BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics = image.createGraphics();
+            for (int tile : stack) {
+                BufferedImage source = tileLoader.getTileImage(sources.get(tile));
+                int frame = Math.min(source.getWidth(), source.getHeight());
+                graphics.drawImage(source, 0, 0, size, size, 0, 0, frame, frame, null);
+            }
+            graphics.dispose();
+            return image;
+        }
+
+        /**
+         * Port of OptiFine's isNeighbourOverlay: true if the neighbor is a full-cube
+         * block, passes the connectBlocks/connectTiles filters, its face is exposed (not
+         * covered by an opaque block or snow layer on top faces), and it does NOT connect
+         * to this block (the overlay only creeps onto different blocks; the connection
+         * check honors the connect= property via the base shouldConnect logic).
+         * 移植 OptiFine 的 isNeighbourOverlay：邻居需为完整立方体方块、通过
+         * connectBlocks/connectTiles 过滤、对应面未被遮挡（顶面还需无雪层覆盖），
+         * 且不能与本方块相连（叠加只蔓延到不同的方块上；连接判定复用基类
+         * shouldConnect 逻辑，从而尊重 connect= 属性）。
+         */
+        private boolean isNeighbourOverlay(RenderBlockState renderBlockState, IIcon origIcon, int relativeDirection) {
+            IBlockAccess blockAccess = renderBlockState.getBlockAccess();
+            int[] offset = renderBlockState.getOffset(renderBlockState.getBlockFace(), relativeDirection);
+            int i = renderBlockState.getI() + offset[0];
+            int j = renderBlockState.getJ() + offset[1];
+            int k = renderBlockState.getK() + offset[2];
+            Block neighbor = BlockAPI.getBlockAt(blockAccess, i, j, k);
+            if (neighbor == null || !neighbor.renderAsNormalBlock()) {
+                return false;
+            }
+            if (!connectBlocks.isEmpty() && !matchesAny(connectBlocks, blockAccess, i, j, k)) {
+                return false;
+            }
+            if (!connectTiles.isEmpty() && !matchesConnectTile(renderBlockState, neighbor, i, j, k)) {
+                return false;
+            }
+            if (isFaceCovered(renderBlockState, blockAccess, i, j, k)) {
+                return false;
+            }
+            // The overlay never creeps onto blocks it would connect to
+            // 叠加不会蔓延到与本方块相连的方块上
+            return !shouldConnect(renderBlockState, origIcon, relativeDirection);
+        }
+
+        /**
+         * Port of OptiFine's isNeighbourMatching: true if the neighbor matches this
+         * override's own matchBlocks/matchTiles criteria and its face is exposed.
+         * 移植 OptiFine 的 isNeighbourMatching：邻居命中本规则自身的
+         * matchBlocks/matchTiles 匹配条件且对应面未被遮挡时为真。
+         */
+        private boolean isNeighbourMatchingExposed(RenderBlockState renderBlockState, IIcon origIcon,
+            int relativeDirection) {
+            IBlockAccess blockAccess = renderBlockState.getBlockAccess();
+            int[] offset = renderBlockState.getOffset(renderBlockState.getBlockFace(), relativeDirection);
+            int i = renderBlockState.getI() + offset[0];
+            int j = renderBlockState.getJ() + offset[1];
+            int k = renderBlockState.getK() + offset[2];
+            if (BlockAPI.getBlockAt(blockAccess, i, j, k) == null) {
+                return false;
+            }
+            return isNeighbourMatching(renderBlockState, origIcon, i, j, k)
+                && !isFaceCovered(renderBlockState, blockAccess, i, j, k);
+        }
+
+        private boolean isNeighbourMatching(RenderBlockState renderBlockState, IIcon origIcon, int i, int j, int k) {
+            IBlockAccess blockAccess = renderBlockState.getBlockAccess();
+            List<BlockStateMatcher> matchBlocks = getMatchingBlocks();
+            if (!matchBlocks.isEmpty()) {
+                return matchesAny(matchBlocks, blockAccess, i, j, k);
+            }
+            // Tile-based match: neighbor uses the same texture on this face
+            // 基于贴图匹配：邻居在同一面上使用相同的纹理
+            Block neighbor = BlockAPI.getBlockAt(blockAccess, i, j, k);
+            return neighbor != null && renderBlockState.shouldConnectByTile(neighbor, origIcon, i, j, k);
+        }
+
+        private boolean matchesConnectTile(RenderBlockState renderBlockState, Block neighbor, int i, int j, int k) {
+            IIcon neighborIcon = BlockAPI.getBlockIcon(
+                neighbor,
+                renderBlockState.getBlockAccess(),
+                i,
+                j,
+                k,
+                renderBlockState.getTextureFaceOrig());
+            return neighborIcon != null && connectTiles.contains(neighborIcon.getIconName());
+        }
+
+        private static boolean matchesAny(List<BlockStateMatcher> matchers, IBlockAccess blockAccess, int i, int j,
+            int k) {
+            for (BlockStateMatcher matcher : matchers) {
+                if (matcher != null && matcher.match(blockAccess, i, j, k)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * True if the neighbor's face on the current side is hidden: covered by an opaque
+         * block, or (top faces only) by a snow layer, mirroring OptiFine's checks.
+         * 当邻居在当前面上被遮挡时为真：被不透明方块覆盖，或（仅顶面）被雪层
+         * 覆盖，与 OptiFine 的判定一致。
+         */
+        private static boolean isFaceCovered(RenderBlockState renderBlockState, IBlockAccess blockAccess, int i, int j,
+            int k) {
+            int face = renderBlockState.getBlockFace();
+            int[] normal = NORMALS[face];
+            Block cover = BlockAPI.getBlockAt(blockAccess, i + normal[0], j + normal[1], k + normal[2]);
+            if (cover == null) {
+                return false;
+            }
+            if (cover.isOpaqueCube()) {
+                return true;
+            }
+            return face == TOP_FACE && cover == Blocks.snow_layer;
+        }
+
+        @Override
+        IIcon getTileWorld_Impl(RenderBlockState renderBlockState, IIcon origIcon) {
+            int edgeBits = 0;
+            int cornerBits = 0;
+            int matchBits = 0;
+            for (int bit = 0; bit < 4; bit++) {
+                if (isNeighbourOverlay(renderBlockState, origIcon, EDGE_DIRECTIONS[bit])) {
+                    edgeBits |= (1 << bit);
+                }
+            }
+            // Corner and same-block flags only influence tiles when not fully surrounded
+            // 角标志与同类标志仅在非全包围时才影响选瓦，顺带省去无效查询
+            if (edgeBits != 0xf) {
+                for (int bit = 0; bit < 4; bit++) {
+                    if (isNeighbourOverlay(renderBlockState, origIcon, CORNER_DIRECTIONS[bit])) {
+                        cornerBits |= (1 << bit);
+                    }
+                }
+                if (cornerBits != 0) {
+                    for (int bit = 0; bit < 4; bit++) {
+                        if (isNeighbourMatchingExposed(renderBlockState, origIcon, EDGE_DIRECTIONS[bit])) {
+                            matchBits |= (1 << bit);
+                        }
+                    }
+                }
+            }
+            int index = flagsToIcon[edgeBits | (cornerBits << 4) | (matchBits << 8)];
+            return index < 0 ? null : icons[index];
+        }
+
+        @Override
+        IIcon getTileHeld_Impl(RenderBlockState renderBlockState, IIcon origIcon) {
+            // Transition overlays depend on world neighbors; no held/inventory variant
+            // 过渡叠加依赖世界邻居，手持/物品栏形态不叠加
+            return null;
         }
     }
 
