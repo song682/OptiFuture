@@ -2,8 +2,8 @@
   "required": true,
   "minVersion": "0.8.5",
   "compatibilityLevel": "JAVA_8",
-  "package": "mist475.mcpatcherforge.mixins.early",
-  "plugin": "mist475.mcpatcherforge.core.MCPatcherForgeMixinPlugin",
+  "package": "decok.dfcdvadstf.optifuture.mixins.early",
+  "plugin": "decok.dfcdvadstf.optifuture.core.MCPatcherForgeMixinPlugin",
   "refmap": "mixins.mcpatcherforge.refmap.json",
   "target": "@env(DEFAULT)",
   "injectors": {

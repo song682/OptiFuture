@@ -1,0 +1,24 @@
+package decok.dfcdvadstf.optifuture.mixins.early.base;
+
+import net.minecraft.client.renderer.texture.AbstractTexture;
+
+import org.lwjgl.opengl.GL11;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+
+import decok.dfcdvadstf.optifuture.mixins.interfaces.AbstractTextureExpansion;
+
+@Mixin(AbstractTexture.class)
+public abstract class MixinAbstractTexture implements AbstractTextureExpansion {
+
+    @Shadow
+    protected int glTextureId;
+
+    public void unloadGLTexture() {
+        if (this.glTextureId >= 0) {
+            GL11.glDeleteTextures(this.glTextureId);
+            this.glTextureId = -1;
+        }
+    }
+
+}

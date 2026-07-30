@@ -8,7 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import mist475.mcpatcherforge.config.MCPatcherForgeConfig;
+import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 
 public class MCLogger {
 
@@ -72,6 +72,12 @@ public class MCLogger {
                 // Custom Panorama shares the Better Skies logging config since its toggle
                 // lives in the same category.
                 // 自定义全景图与 Better Skies 共用日志配置，因为其开关位于同一配置分类下。
+                levelName = config.betterSkiesLoggingLevel;
+                break;
+            case CUSTOM_LOADING_SCREENS:
+                // Custom Loading Screens shares the Better Skies logging config since its
+                // toggle lives in the same category.
+                // 自定义加载屏幕与 Better Skies 共用日志配置，因为其开关位于同一配置分类下。
                 levelName = config.betterSkiesLoggingLevel;
                 break;
             default:
@@ -211,6 +217,7 @@ public class MCLogger {
         BETTER_SKIES(MCPatcherUtils.BETTER_SKIES),
         CUSTOM_ENTITY_MODELS(MCPatcherUtils.CUSTOM_ENTITY_MODELS),
         CUSTOM_PANORAMA(MCPatcherUtils.CUSTOM_PANORAMA),
+        CUSTOM_LOADING_SCREENS(MCPatcherUtils.CUSTOM_LOADING_SCREENS),
         TEXTURE_PACK("Texture Pack"),
 
         TILESHEET("Tilesheet"),
