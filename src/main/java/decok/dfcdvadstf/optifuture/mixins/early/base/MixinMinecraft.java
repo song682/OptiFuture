@@ -31,6 +31,7 @@ import com.prupe.mcpatcher.mal.block.BetterGrass;
 import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 import com.prupe.mcpatcher.mal.tile.TileLoader;
 import com.prupe.mcpatcher.mob.MobRandomizer;
+import com.prupe.mcpatcher.natural.NaturalTextures;
 
 import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 
@@ -101,6 +102,9 @@ public abstract class MixinMinecraft {
         }
         if (config.customColorsEnabled) {
             Colorizer.init();
+        }
+        if (config.naturalTexturesEnabled) {
+            NaturalTextures.init();
         }
     }
 

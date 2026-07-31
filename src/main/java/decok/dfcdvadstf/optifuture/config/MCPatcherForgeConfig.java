@@ -104,6 +104,11 @@ public class MCPatcherForgeConfig {
     /** Enable randomized alternative models via .properties rules. / 启用基于 .properties 的随机模型规则。 */
     public boolean cemRandomModels;
 
+    // NATURAL_TEXTURES
+    // 自然纹理：按方块坐标随机旋转/翻转 natural.properties 配置的纹理。
+    public boolean naturalTexturesEnabled;
+    public String naturalTexturesLoggingLevel;
+
     public enum Category {
 
         CUSTOM_COLORS,
@@ -112,7 +117,8 @@ public class MCPatcherForgeConfig {
         EXTENDED_HD,
         RANDOM_MOBS,
         BETTER_SKIES,
-        CUSTOM_ENTITY_MODELS;
+        CUSTOM_ENTITY_MODELS,
+        NATURAL_TEXTURES;
 
         @Override
         public String toString() {
@@ -203,6 +209,9 @@ public class MCPatcherForgeConfig {
         customEntityModelsLoggingLevel = config.get(Category.CUSTOM_ENTITY_MODELS.toString(),"logging",Level.INFO.getName(),"logging level").getString();
         cemAnimations = config.get(Category.CUSTOM_ENTITY_MODELS.toString(),"animations",true).getBoolean();
         cemRandomModels = config.get(Category.CUSTOM_ENTITY_MODELS.toString(),"randomModels",true).getBoolean();
+
+        naturalTexturesEnabled = config.get(Category.NATURAL_TEXTURES.toString(),"enabled",true,"Enable the natural textures module").getBoolean();
+        naturalTexturesLoggingLevel = config.get(Category.NATURAL_TEXTURES.toString(),"logging",Level.INFO.getName(),"logging level").getString();
 
         // spotless:on
         if (config.hasChanged()) config.save();

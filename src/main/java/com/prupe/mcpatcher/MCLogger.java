@@ -80,6 +80,9 @@ public class MCLogger {
                 // 自定义加载屏幕与 Better Skies 共用日志配置，因为其开关位于同一配置分类下。
                 levelName = config.betterSkiesLoggingLevel;
                 break;
+            case NATURAL_TEXTURES:
+                levelName = config.naturalTexturesLoggingLevel;
+                break;
             default:
                 levelName = Level.INFO.getName();
                 break;
@@ -222,6 +225,7 @@ public class MCLogger {
 
         TILESHEET("Tilesheet"),
         BETTER_GLASS(MCPatcherUtils.BETTER_GLASS),
+        NATURAL_TEXTURES(MCPatcherUtils.NATURAL_TEXTURES),
 
         ;
 

@@ -212,6 +212,14 @@ public enum Mixins {
         .addTargetedMod(TargetedMod.VANILLA)
         .addMixinClasses("ctm_cc.MixinTextureMap")),
 
+    // Natural Textures: per-block random rotation/flip of configured textures (natural.properties).
+    // 自然纹理：按方块坐标随机旋转/翻转 natural.properties 配置的纹理。
+    NATURAL_TEXTURES(new Builder("Natural Textures").setSide(Side.CLIENT)
+        .setPhase(Phase.EARLY)
+        .setApplyIf(() -> MCPatcherForgeConfig.instance().naturalTexturesEnabled)
+        .addTargetedMod(TargetedMod.VANILLA)
+        .addMixinClasses("natural.MixinRenderBlocks")),
+
     ;
 
     public final String name;
