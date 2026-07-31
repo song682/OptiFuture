@@ -12,6 +12,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.prupe.mcpatcher.cit.CITUtils;
 
+/**
+ * Redirects the armor texture binding of biped mobs through the CIT resolver so
+ * custom armor textures apply in both the base and overlay armor render passes.
+ * <p>
+ * 将双足生物的护甲材质绑定经由 CIT 解析器重定向，使自定义护甲材质
+ * 在基础与叠加两个护甲渲染阶段均生效。
+ */
 @Mixin(RenderBiped.class)
 public abstract class MixinRenderBiped extends RenderLiving {
 
@@ -24,10 +31,9 @@ public abstract class MixinRenderBiped extends RenderLiving {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/entity/RenderBiped;bindTexture(Lnet/minecraft/util/ResourceLocation;)V"))
-    private void modifyShouldRenderPass(RenderBiped instance, ResourceLocation resourceLocation,
-        EntityLiving entityLiving, int slotId, float p_77032_3_) {
-        this.bindTexture(
-            CITUtils.getArmorTexture(resourceLocation, entityLiving, entityLiving.func_130225_q(3 - slotId)));
+    private void optiFuture$bindArmorTexture(RenderBiped renderer, ResourceLocation texture,
+        EntityLiving entity, int slotId, float partialTicks) {
+        this.bindTexture(CITUtils.getArmorTexture(texture, entity, entity.func_130225_q(3 - slotId)));
     }
 
     @Redirect(
@@ -35,10 +41,8 @@ public abstract class MixinRenderBiped extends RenderLiving {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/entity/RenderBiped;bindTexture(Lnet/minecraft/util/ResourceLocation;)V"))
-
-    private void modifyFunc_82408_c(RenderBiped instance, ResourceLocation resourceLocation, EntityLiving entityLiving,
-        int slotId, float p_82408_3_) {
-        this.bindTexture(
-            CITUtils.getArmorTexture(resourceLocation, entityLiving, entityLiving.func_130225_q(3 - slotId)));
+    private void optiFuture$bindArmorOverlayTexture(RenderBiped renderer, ResourceLocation texture,
+        EntityLiving entity, int slotId, float partialTicks) {
+        this.bindTexture(CITUtils.getArmorTexture(texture, entity, entity.func_130225_q(3 - slotId)));
     }
 }

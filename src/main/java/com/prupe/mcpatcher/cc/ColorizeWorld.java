@@ -22,7 +22,7 @@ import com.prupe.mcpatcher.mal.biome.IColorMap;
 import com.prupe.mcpatcher.mal.resource.PropertiesFile;
 import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 
-import mist475.mcpatcherforge.config.MCPatcherForgeConfig;
+import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 
 public class ColorizeWorld {
 

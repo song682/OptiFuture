@@ -18,6 +18,16 @@ import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import com.prupe.mcpatcher.cc.ColorizeBlock;
 
+/**
+ * Applies custom-colors liquid tinting to fluid rendering when the custom
+ * colors feature is enabled but connected-textures is not: it captures the
+ * block colour multiplier and applies per-channel smoothing/tinting to the
+ * fluid faces while keeping the vanilla icon lookup.
+ * <p>
+ * 当自定义颜色启用而连接材质未启用时，为流体渲染应用自定义
+ * 颜色的液体染色：捕获方块颜色乘数，并在保持原版图标查找的
+ * 同时对流体面逐通道进行平滑/染色。
+ */
 @Mixin(RenderBlocks.class)
 public abstract class MixinRenderBlocksNoCTM {
 
@@ -36,7 +46,7 @@ public abstract class MixinRenderBlocksNoCTM {
     // 在 HEAD 处捕获方块颜色乘数：旧实现在顶面图标调用内捕获，顶面被剔除时
     // @Share 引用保持 0，导致底面全黑。通道映射与原版一致：red = >>16、green = >>8、blue = &255。
     @Inject(method = "renderBlockLiquid(Lnet/minecraft/block/Block;III)Z", at = @At("HEAD"))
-    private void mcpatcherforge$captureColorMultiplier(Block block, int x, int y, int z,
+    private void optiFuture$captureColorMultiplier(Block block, int x, int y, int z,
         CallbackInfoReturnable<Boolean> cir, @Share("red") LocalFloatRef red, @Share("green") LocalFloatRef green,
         @Share("blue") LocalFloatRef blue) {
         int l = block.colorMultiplier(this.blockAccess, x, y, z);
@@ -52,7 +62,7 @@ public abstract class MixinRenderBlocksNoCTM {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;getBlockIconFromSideAndMetadata(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;",
             ordinal = 2))
-    private IIcon mcpatcherforge$saveSideAndRedirectToGetBlockIcon(RenderBlocks instance, Block block, int side,
+    private IIcon optiFuture$saveSideAndRedirectToGetBlockIcon(RenderBlocks instance, Block block, int side,
         int meta, Block specializedBlock, int x, int y, int z, @Share("requiredSide") LocalIntRef requiredSide) {
         requiredSide.set(side);
         return this.getBlockIconFromSideAndMetadata(block, side, meta);
@@ -64,7 +74,7 @@ public abstract class MixinRenderBlocksNoCTM {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 2))
-    private void mcpatcherforge$redirectColor10(Tessellator tessellator, float red, float green, float blue,
+    private void optiFuture$redirectColor10(Tessellator tessellator, float red, float green, float blue,
         Block block, int x, int y, int z, @Share("requiredSide") LocalIntRef requiredSide) {
         if (!(ColorizeBlock.isSmooth = ColorizeBlock.setupBlockSmoothing(
             (RenderBlocks) (Object) this,
@@ -84,7 +94,7 @@ public abstract class MixinRenderBlocksNoCTM {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 1))
-    private void mcpatcherforge$redirectColor9(Tessellator tessellator, float red, float green, float blue, Block block,
+    private void optiFuture$redirectColor9(Tessellator tessellator, float red, float green, float blue, Block block,
         int x, int y, int z, @Share("red") LocalFloatRef redLocal, @Share("green") LocalFloatRef greenLocal,
         @Share("blue") LocalFloatRef blueLocal) {
         if (!(ColorizeBlock.isSmooth = ColorizeBlock

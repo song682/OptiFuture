@@ -27,8 +27,8 @@ import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 import com.prupe.mcpatcher.mal.tile.TileLoader;
 
-import mist475.mcpatcherforge.config.MCPatcherForgeConfig;
-import mist475.mcpatcherforge.mixins.interfaces.NBTTagListExpansion;
+import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
+import decok.dfcdvadstf.optifuture.interfaces.NBTTagListExpansion;
 
 public class CITUtils {
 

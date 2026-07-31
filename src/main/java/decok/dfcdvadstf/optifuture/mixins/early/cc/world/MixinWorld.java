@@ -15,6 +15,16 @@ import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.prupe.mcpatcher.cc.ColorizeWorld;
 import com.prupe.mcpatcher.cc.Colorizer;
 
+/**
+ * Overrides the sky color at the top of the world when a custom sky color is
+ * configured. The HEAD injection decides whether the custom color applies and
+ * shares that flag; the three {@code STORE} variable modifications then swap in
+ * the configured RGB channels for the final vector.
+ * <p>
+ * 当配置了自定义天空颜色时，覆盖世界上方的天空颜色。HEAD 注入判断
+ * 是否应用自定义颜色并共享该标志；随后三处 {@code STORE} 变量修改
+ * 将配置的 RGB 分量替换进最终向量。
+ */
 @Mixin(World.class)
 public abstract class MixinWorld {
 
@@ -22,9 +32,9 @@ public abstract class MixinWorld {
         method = "getSkyColorBody(Lnet/minecraft/entity/Entity;F)Lnet/minecraft/util/Vec3;",
         at = @At("HEAD"),
         remap = false)
-    private void modifyGetSkyColorBody1(Entity entity, float p_72833_2_, CallbackInfoReturnable<Vec3> cir,
+    private void optiFuture$prepareSkyColor(Entity entity, float partialTicks, CallbackInfoReturnable<Vec3> cir,
         @Share("computeSkyColor") LocalBooleanRef computeSkyColor) {
-        computeSkyColor.set(ColorizeWorld.computeSkyColor((World) (Object) this, p_72833_2_));
+        computeSkyColor.set(ColorizeWorld.computeSkyColor((World) (Object) this, partialTicks));
     }
 
     @Inject(
@@ -34,7 +44,7 @@ public abstract class MixinWorld {
             target = "Lnet/minecraftforge/client/ForgeHooksClient;getSkyBlendColour(Lnet/minecraft/world/World;III)I",
             remap = false),
         remap = false)
-    private void modifyGetSkyColorBody2(Entity entity, float p_72833_2_, CallbackInfoReturnable<Vec3> cir) {
+    private void optiFuture$setupSkyFog(Entity entity, float partialTicks, CallbackInfoReturnable<Vec3> cir) {
         ColorizeWorld.setupForFog(entity);
     }
 
@@ -44,11 +54,8 @@ public abstract class MixinWorld {
         at = @At(value = "STORE", ordinal = 0),
         ordinal = 3,
         remap = false)
-    private float modifyGetSkyColorBody3(float input, @Share("computeSkyColor") LocalBooleanRef computeSkyColor) {
-        if (computeSkyColor.get()) {
-            return Colorizer.setColor[0];
-        }
-        return input;
+    private float optiFuture$overrideSkyRed(float original, @Share("computeSkyColor") LocalBooleanRef computeSkyColor) {
+        return computeSkyColor.get() ? Colorizer.setColor[0] : original;
     }
 
     @SuppressWarnings("InvalidInjectorMethodSignature")
@@ -57,11 +64,9 @@ public abstract class MixinWorld {
         at = @At(value = "STORE", ordinal = 0),
         ordinal = 4,
         remap = false)
-    private float modifyGetSkyColorBody4(float input, @Share("computeSkyColor") LocalBooleanRef computeSkyColor) {
-        if (computeSkyColor.get()) {
-            return Colorizer.setColor[1];
-        }
-        return input;
+    private float optiFuture$overrideSkyGreen(float original,
+        @Share("computeSkyColor") LocalBooleanRef computeSkyColor) {
+        return computeSkyColor.get() ? Colorizer.setColor[1] : original;
     }
 
     @SuppressWarnings("InvalidInjectorMethodSignature")
@@ -70,10 +75,8 @@ public abstract class MixinWorld {
         at = @At(value = "STORE", ordinal = 0),
         ordinal = 5,
         remap = false)
-    private float modifyGetSkyColorBody5(float input, @Share("computeSkyColor") LocalBooleanRef computeSkyColor) {
-        if (computeSkyColor.get()) {
-            return Colorizer.setColor[2];
-        }
-        return input;
+    private float optiFuture$overrideSkyBlue(float original,
+        @Share("computeSkyColor") LocalBooleanRef computeSkyColor) {
+        return computeSkyColor.get() ? Colorizer.setColor[2] : original;
     }
 }

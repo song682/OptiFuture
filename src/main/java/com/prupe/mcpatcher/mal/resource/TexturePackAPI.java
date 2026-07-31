@@ -34,7 +34,7 @@ import org.apache.commons.io.IOUtils;
 import com.prupe.mcpatcher.MCLogger;
 import com.prupe.mcpatcher.MCPatcherUtils;
 
-import mist475.mcpatcherforge.mixins.interfaces.AbstractTextureExpansion;
+import decok.dfcdvadstf.optifuture.interfaces.AbstractTextureExpansion;
 
 public class TexturePackAPI {
 

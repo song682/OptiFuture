@@ -10,11 +10,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.prupe.mcpatcher.cc.ColorizeItem;
 
+/**
+ * Recolors spawn-egg overlay/base spots according to the active color
+ * configuration once vanilla has computed its default value.
+ * <p>
+ * 在原版计算出默认取值之后，依据当前颜色配置重新着色刷怪蛋的
+ * 底色与斑点色。
+ */
 @Mixin(ItemMonsterPlacer.class)
 public abstract class MixinItemMonsterPlacer {
 
     @Inject(method = "getColorFromItemStack(Lnet/minecraft/item/ItemStack;I)I", at = @At("RETURN"), cancellable = true)
-    private void modifyGetColorFromItemStack(ItemStack itemStack, int spots, CallbackInfoReturnable<Integer> cir) {
+    private void optiFuture$recolorSpawnerEgg(ItemStack itemStack, int spots,
+        CallbackInfoReturnable<Integer> cir) {
         cir.setReturnValue(ColorizeItem.colorizeSpawnerEgg(cir.getReturnValue(), itemStack.getItemDamage(), spots));
     }
 }

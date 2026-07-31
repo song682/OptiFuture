@@ -14,8 +14,8 @@ import com.prupe.mcpatcher.mal.resource.PropertiesFile;
 import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 
-import mist475.mcpatcherforge.config.MCPatcherForgeConfig;
-import mist475.mcpatcherforge.mixins.interfaces.FontRendererExpansion;
+import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
+import decok.dfcdvadstf.optifuture.interfaces.FontRendererExpansion;
 
 public class FontUtils {
 

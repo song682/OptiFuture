@@ -12,6 +12,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.prupe.mcpatcher.mob.MobRandomizer;
 
+/**
+ * Randomizes every texture binding in the wolf's render passes so both the wet
+ * shaking overlay and the collar align with the randomized body skin.
+ * <p>
+ * 随机化狼渲染各阶段中的每一次材质绑定，使抖水叠加层与项圈均与
+ * 随机化的身体皮肤保持一致。
+ */
 @Mixin(RenderWolf.class)
 public abstract class MixinRenderWolf extends RenderLiving {
 
@@ -29,7 +36,7 @@ public abstract class MixinRenderWolf extends RenderLiving {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/entity/RenderWolf;bindTexture(Lnet/minecraft/util/ResourceLocation;)V"))
-    private void modifyShouldRenderPass1(RenderWolf instance, ResourceLocation resourceLocation, EntityWolf entity) {
-        this.bindTexture(MobRandomizer.randomTexture(entity, resourceLocation));
+    private void optiFuture$randomizeWolfTexture(RenderWolf renderer, ResourceLocation texture, EntityWolf entity) {
+        this.bindTexture(MobRandomizer.randomTexture(entity, texture));
     }
 }

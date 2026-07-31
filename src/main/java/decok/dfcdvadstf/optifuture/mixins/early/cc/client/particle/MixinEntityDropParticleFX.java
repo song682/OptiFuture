@@ -18,6 +18,14 @@ import com.prupe.mcpatcher.cc.ColorizeBlock;
 import com.prupe.mcpatcher.cc.ColorizeEntity;
 import com.prupe.mcpatcher.cc.Colorizer;
 
+/**
+ * Custom-colors integration for dripping water/lava particles. The initial color
+ * is set at construction time, while {@link #onUpdate()} recomputes the tint every
+ * tick because vanilla itself refreshes the drip color on each update.
+ * <p>
+ * 为滴落的水/岩浆粒子接入自定义颜色。初始颜色在构造时设置；由于原版本身每 tick 都会刷新
+ * 滴落颜色，因此 {@link #onUpdate()} 每 tick 重新计算色调。
+ */
 @Mixin(EntityDropParticleFX.class)
 public abstract class MixinEntityDropParticleFX extends EntityFX {
 
@@ -34,7 +42,8 @@ public abstract class MixinEntityDropParticleFX extends EntityFX {
     @Inject(
         method = "<init>(Lnet/minecraft/world/World;DDDLnet/minecraft/block/material/Material;)V",
         at = @At("RETURN"))
-    private void modifyConstructor(World worldIn, double x, double y, double z, Material material, CallbackInfo ci) {
+    private void optiFuture$tintDropInit(World worldIn, double x, double y, double z, Material material,
+        CallbackInfo ci) {
         if (material == Material.water) {
             if (ColorizeBlock.computeWaterColor(true, (int) this.posX, (int) this.posY, (int) this.posZ)) {
                 this.particleRed = Colorizer.setColor[0];
@@ -53,8 +62,10 @@ public abstract class MixinEntityDropParticleFX extends EntityFX {
     }
 
     /**
-     * @author Mist475 (adapted from Paul Rupe)
-     * @reason Inject would be too inefficient
+     * @author OptiFutureOptimized
+     * @reason The tick color must be recomputed each frame; an injection would run
+     *         after vanilla has already overwritten the channels, so the whole tick
+     *         body is reimplemented with the custom-colors branch inlined.
      */
     @SuppressWarnings("DuplicatedCode")
     @Overwrite

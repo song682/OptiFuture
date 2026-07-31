@@ -21,6 +21,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.prupe.mcpatcher.cit.CITUtils;
 
+/**
+ * Applies CIT overrides to dropped/GUI item rendering: item icons are resolved
+ * through the CIT system, CIT enchantment overlays replace the vanilla glint
+ * where applicable, and a few depth/alpha state tweaks keep inventory item
+ * transparency and glint ordering correct.
+ * <p>
+ * 为掉落物/GUI 中的物品渲染应用 CIT 覆盖：物品图标经由 CIT 系统解析，
+ * 在适用时以 CIT 附魔覆盖层替代原版光效，并通过若干深度/透明度状态
+ * 调整以保持物品栏内物品的透明度与光效顺序正确。
+ */
 @Mixin(RenderItem.class)
 public abstract class MixinRenderItem extends Render {
 
@@ -42,7 +52,7 @@ public abstract class MixinRenderItem extends Render {
             value = "INVOKE",
             target = "Lnet/minecraft/item/Item;getIcon(Lnet/minecraft/item/ItemStack;I)Lnet/minecraft/util/IIcon;",
             remap = false))
-    private IIcon modifyDoRender(Item item, ItemStack itemStack, int pass) {
+    private IIcon optiFuture$resolveDroppedIcon(Item item, ItemStack itemStack, int pass) {
         return CITUtils.getIcon(item.getIcon(itemStack, pass), itemStack, pass);
     }
 
@@ -50,16 +60,16 @@ public abstract class MixinRenderItem extends Render {
         method = "renderDroppedItem(Lnet/minecraft/entity/item/EntityItem;Lnet/minecraft/util/IIcon;IFFFFI)V",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;hasEffect(I)Z", remap = false),
         remap = false)
-    private boolean modifyRenderDroppedItem(ItemStack instance, int pass) {
-        return !CITUtils.renderEnchantmentDropped(instance) && instance.hasEffect(pass);
+    private boolean optiFuture$suppressDroppedGlint(ItemStack itemStack, int pass) {
+        return !CITUtils.renderEnchantmentDropped(itemStack) && itemStack.hasEffect(pass);
     }
 
     @Inject(
         method = "renderItemIntoGUI(Lnet/minecraft/client/gui/FontRenderer;Lnet/minecraft/client/renderer/texture/TextureManager;Lnet/minecraft/item/ItemStack;IIZ)V",
         at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glColorMask(ZZZZ)V", remap = false, ordinal = 0),
         remap = false)
-    private void modifyRenderItemIntoGUI1(FontRenderer fontRenderer, TextureManager manager, ItemStack itemStack, int x,
-        int y, boolean renderEffect, CallbackInfo ci) {
+    private void optiFuture$disableDepthMaskForGui(FontRenderer fontRenderer, TextureManager manager,
+        ItemStack itemStack, int x, int y, boolean renderEffect, CallbackInfo ci) {
         GL11.glDepthMask(false);
     }
 
@@ -67,8 +77,8 @@ public abstract class MixinRenderItem extends Render {
         method = "renderItemIntoGUI(Lnet/minecraft/client/gui/FontRenderer;Lnet/minecraft/client/renderer/texture/TextureManager;Lnet/minecraft/item/ItemStack;IIZ)V",
         at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glEnable(I)V", remap = false, ordinal = 4),
         remap = false)
-    private void modifyRenderItemIntoGUI2(FontRenderer fontRenderer, TextureManager manager, ItemStack itemStack, int x,
-        int y, boolean renderEffect, CallbackInfo ci) {
+    private void optiFuture$restoreDepthMaskForGui(FontRenderer fontRenderer, TextureManager manager,
+        ItemStack itemStack, int x, int y, boolean renderEffect, CallbackInfo ci) {
         GL11.glDepthMask(true);
     }
 
@@ -79,7 +89,7 @@ public abstract class MixinRenderItem extends Render {
             target = "Lnet/minecraft/item/Item;getIcon(Lnet/minecraft/item/ItemStack;I)Lnet/minecraft/util/IIcon;",
             remap = false),
         remap = false)
-    private IIcon modifyRenderItemIntoGUI3(Item item, ItemStack itemStack, int pass) {
+    private IIcon optiFuture$resolveGuiIcon(Item item, ItemStack itemStack, int pass) {
         return CITUtils.getIcon(item.getIcon(itemStack, pass), itemStack, pass);
     }
 
@@ -90,7 +100,7 @@ public abstract class MixinRenderItem extends Render {
         method = "renderItemIntoGUI(Lnet/minecraft/client/gui/FontRenderer;Lnet/minecraft/client/renderer/texture/TextureManager;Lnet/minecraft/item/ItemStack;IIZ)V",
         at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glEnable(I)V", remap = false, ordinal = 10),
         remap = false)
-    private void cancelAlpha3(int cap) {
+    private void optiFuture$skipAlphaEnable(int cap) {
 
     }
 
@@ -98,7 +108,7 @@ public abstract class MixinRenderItem extends Render {
         method = "renderItemIntoGUI(Lnet/minecraft/client/gui/FontRenderer;Lnet/minecraft/client/renderer/texture/TextureManager;Lnet/minecraft/item/ItemStack;IIZ)V",
         at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glDisable(I)V", remap = false, ordinal = 8),
         remap = false)
-    private void cancelAlpha4(int cap) {
+    private void optiFuture$skipAlphaDisable(int cap) {
 
     }
 
@@ -108,7 +118,7 @@ public abstract class MixinRenderItem extends Render {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/entity/RenderItem;renderItemIntoGUI(Lnet/minecraft/client/gui/FontRenderer;Lnet/minecraft/client/renderer/texture/TextureManager;Lnet/minecraft/item/ItemStack;IIZ)V",
             remap = false))
-    private void modifyRenderItemAndEffectIntoGUI1(FontRenderer fontRenderer, TextureManager manager,
+    private void optiFuture$enableAlphaBeforeGui(FontRenderer fontRenderer, TextureManager manager,
         ItemStack itemStack, int x, int y, CallbackInfo ci) {
         // Moved to before call, will not trigger with forge event
         GL11.glEnable(GL11.GL_ALPHA_TEST);
@@ -131,7 +141,7 @@ public abstract class MixinRenderItem extends Render {
     @Inject(
         method = "renderItemAndEffectIntoGUI(Lnet/minecraft/client/gui/FontRenderer;Lnet/minecraft/client/renderer/texture/TextureManager;Lnet/minecraft/item/ItemStack;II)V",
         at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/entity/RenderItem;zLevel:F", ordinal = 3))
-    private void modifyRenderItemAndEffectIntoGUI2(FontRenderer fontRenderer, TextureManager manager,
+    private void optiFuture$restoreGuiGlint(FontRenderer fontRenderer, TextureManager manager,
         ItemStack itemStack, int x, int y, CallbackInfo ci) {
         if (!CITUtils.renderEnchantmentGUI(itemStack, x, y, this.zLevel) && itemStack.hasEffect(0)) {
             GL11.glDepthFunc(GL11.GL_EQUAL);

@@ -8,7 +8,6 @@ import java.util.Map;
 
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RendererLivingEntity;
 import net.minecraft.entity.EntityLivingBase;
@@ -24,7 +23,7 @@ import com.prupe.mcpatcher.cem.parse.JemParser;
 import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 
-import mist475.mcpatcherforge.config.MCPatcherForgeConfig;
+import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 
 /**
  * Custom Entity Models orchestrator. On every resource pack (re)load it scans

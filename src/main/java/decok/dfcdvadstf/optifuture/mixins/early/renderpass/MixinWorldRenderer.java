@@ -30,9 +30,9 @@ import com.prupe.mcpatcher.renderpass.RenderPass;
 
 /**
  * Note: the render-pass bookkeeping formerly done by the ASM WorldRendererTransformer is now
- * handled here by {@link #redirectCheckRenderPassesUpdateRenderer}.
+ * handled here by {@link #optiFuture$checkRenderPasses}.
  * 注：原由 ASM WorldRendererTransformer 完成的渲染 pass 记账逻辑，现已由
- * {@link #redirectCheckRenderPassesUpdateRenderer} 在本类中承担。
+ * {@link #optiFuture$checkRenderPasses} 在本类中承担。
  */
 @Mixin(WorldRenderer.class)
 public abstract class MixinWorldRenderer {
@@ -48,7 +48,7 @@ public abstract class MixinWorldRenderer {
     public abstract void setPosition(int x, int y, int z);
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;Ljava/util/List;IIII)V", at = @At("RETURN"))
-    private void modifyWorldRendererConstructor1(World world, List<TileEntity> tileEntities, int x, int y, int z,
+    private void optiFuture$initSkipRenderPass(World world, List<TileEntity> tileEntities, int x, int y, int z,
         int glRenderList, CallbackInfo ci) {
         skipRenderPass = new boolean[4];
         this.setPosition(x, y, z);
@@ -61,25 +61,25 @@ public abstract class MixinWorldRenderer {
     @Redirect(
         method = "<init>(Lnet/minecraft/world/World;Ljava/util/List;IIII)V",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/WorldRenderer;setPosition(III)V"))
-    private void modifyWorldRendererConstructor2(WorldRenderer renderer, int x, int y, int z) {}
+    private void optiFuture$skipInitialSetPosition(WorldRenderer renderer, int x, int y, int z) {}
 
     @ModifyArg(
         method = "setPosition(III)V",
         at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glNewList(II)V", remap = false),
         index = 0)
-    private int modifySetPosition(int list) {
+    private int optiFuture$offsetNewListIndex(int list) {
         return list + 2;
     }
 
     @ModifyConstant(
         method = "updateRenderer(Lnet/minecraft/entity/EntityLivingBase;)V",
         constant = @Constant(intValue = 2))
-    private int adjustRenderpassSizeUpdateRenderer(int constant) {
+    private int optiFuture$expandRenderPassCount(int constant) {
         return 4;
     }
 
     @Inject(method = "updateRenderer(Lnet/minecraft/entity/EntityLivingBase;)V", at = @At("RETURN"))
-    private void finishRenderPassUpdateRenderer(EntityLivingBase entityLivingBase, CallbackInfo ci) {
+    private void optiFuture$finishRenderPass(EntityLivingBase entityLivingBase, CallbackInfo ci) {
         RenderPass.finish();
     }
 
@@ -90,7 +90,7 @@ public abstract class MixinWorldRenderer {
         method = "updateRenderer(Lnet/minecraft/entity/EntityLivingBase;)V",
         at = @At(value = "JUMP", ordinal = 4, shift = At.Shift.AFTER),
         locals = LocalCapture.CAPTURE_FAILHARD)
-    private void injectRenderPassStartUpdateRenderer(EntityLivingBase entity, CallbackInfo ci, int i, int j, int k,
+    private void optiFuture$startRenderPass(EntityLivingBase entity, CallbackInfo ci, int i, int j, int k,
         int l, int i1, int j1, HashSet hashset, Minecraft minecraft, EntityLivingBase entity1, int l1, int i2, int j2,
         byte b0, ChunkCache chunkcache, RenderBlocks renderblocks, int k2) {
         RenderPass.start(k2);
@@ -99,7 +99,7 @@ public abstract class MixinWorldRenderer {
     @Redirect(
         method = "updateRenderer(Lnet/minecraft/entity/EntityLivingBase;)V",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;canRenderInPass(I)Z", remap = false))
-    private boolean redirectCanRenderInThisPassUpdateRenderer(Block block, int pass) {
+    private boolean optiFuture$canRenderInThisPass(Block block, int pass) {
         return RenderPass.canRenderInThisPass(block.getRenderBlockPass() == pass);
     }
 
@@ -121,7 +121,7 @@ public abstract class MixinWorldRenderer {
     @Redirect(
         method = "updateRenderer(Lnet/minecraft/entity/EntityLivingBase;)V",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getRenderBlockPass()I"))
-    private int redirectCheckRenderPassesUpdateRenderer(Block block,
+    private int optiFuture$checkRenderPasses(Block block,
         @Local(index = 18) LocalBooleanRef moreRenderPasses) {
         moreRenderPasses.set(RenderPass.checkRenderPasses(block, moreRenderPasses.get()));
         return -1;
@@ -150,7 +150,7 @@ public abstract class MixinWorldRenderer {
      */
 
     @ModifyConstant(method = "setDontDraw()V", constant = @Constant(intValue = 2))
-    private int modifySetDontDraw(int length) {
+    private int optiFuture$clampSkipRenderPassLength(int length) {
         // Initial draw to setPosition runs before skipRenderPass length is changed, if 4 is used it will throw an out
         // of bounds
         return this.skipRenderPass.length;
@@ -160,13 +160,13 @@ public abstract class MixinWorldRenderer {
         method = "callOcclusionQueryList()V",
         at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glCallList(I)V", remap = false),
         index = 0)
-    private int modifyCallOcclusionQueryList(int list) {
+    private int optiFuture$offsetOcclusionListIndex(int list) {
         return list + 2;
     }
 
     /**
-     * @author Mist475 (adapted from Paul Rupe)
-     * @reason entire check is different except null check
+     * @author OptiFutureOptimized
+     * @reason The pass-skipping check is entirely replaced except the null guard.
      */
     @Overwrite
     public boolean skipAllRenderPasses() {

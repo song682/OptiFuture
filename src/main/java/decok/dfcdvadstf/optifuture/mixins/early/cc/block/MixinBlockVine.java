@@ -11,25 +11,32 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.prupe.mcpatcher.cc.ColorizeBlock;
 
+/**
+ * Hooks vine coloring into the custom-colors engine so climbing vines follow
+ * pack-defined tints instead of the fixed vanilla foliage color.
+ * <p>
+ * 将藤蔓的染色接入自定义颜色引擎，使其跟随资源包定义的色调，而非原版固定的植被色。
+ */
 @Mixin(BlockVine.class)
 public abstract class MixinBlockVine {
 
     @Inject(method = "getBlockColor()I", at = @At("HEAD"), cancellable = true)
-    private void modifyGetBlockColor(CallbackInfoReturnable<Integer> cir) {
+    private void optiFuture$applyBlockColor(CallbackInfoReturnable<Integer> cir) {
         if (ColorizeBlock.colorizeBlock((Block) (Object) this)) {
             cir.setReturnValue(ColorizeBlock.blockColor);
         }
     }
 
     @Inject(method = "getRenderColor(I)I", at = @At("HEAD"), cancellable = true)
-    private void modifyGetRenderColor(int meta, CallbackInfoReturnable<Integer> cir) {
+    private void optiFuture$applyRenderColor(int meta, CallbackInfoReturnable<Integer> cir) {
         if (ColorizeBlock.colorizeBlock((Block) (Object) this, meta)) {
             cir.setReturnValue(ColorizeBlock.blockColor);
         }
     }
 
     @Inject(method = "colorMultiplier(Lnet/minecraft/world/IBlockAccess;III)I", at = @At("HEAD"), cancellable = true)
-    private void modifyColorMultiplier(IBlockAccess worldIn, int x, int y, int z, CallbackInfoReturnable<Integer> cir) {
+    private void optiFuture$applyColorMultiplier(IBlockAccess worldIn, int x, int y, int z,
+        CallbackInfoReturnable<Integer> cir) {
         if (ColorizeBlock.colorizeBlock((Block) (Object) this, worldIn, x, y, z)) {
             cir.setReturnValue(ColorizeBlock.blockColor);
         }

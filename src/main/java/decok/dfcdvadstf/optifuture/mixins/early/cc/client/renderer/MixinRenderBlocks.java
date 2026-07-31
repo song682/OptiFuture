@@ -31,6 +31,19 @@ import com.prupe.mcpatcher.cc.Colorizer;
 import com.prupe.mcpatcher.mal.block.RenderBlocksUtils;
 import com.prupe.mcpatcher.renderpass.RenderPass;
 
+/**
+ * Applies custom-colors (cc) tinting to vanilla block rendering when the
+ * custom-colors feature is enabled: cauldron water and redstone wire get
+ * computed biome colors, standard blocks get per-face smooth biome colors
+ * through {@link ColorizeBlock}/{@link RenderBlocksUtils}, and liquid faces
+ * receive per-vertex color smoothing with ambient occlusion coordinated with
+ * the ctm_cc variant.
+ * <p>
+ * 当自定义颜色（cc）功能启用时，为原版方块渲染应用自定义颜色染色：
+ * 炼药锅水与红石线获得计算后的群系颜色，标准方块通过
+ * {@link ColorizeBlock}/{@link RenderBlocksUtils} 获得逐面平滑群系颜色，
+ * 流体面获得逐顶点颜色平滑，其环境光遮蔽与 ctm_cc 变体协同。
+ */
 @Mixin(RenderBlocks.class)
 public abstract class MixinRenderBlocks {
 
@@ -69,7 +82,7 @@ public abstract class MixinRenderBlocks {
     public abstract boolean hasOverrideBlockTexture();
 
     @Unique
-    private void mcpatcherforge$setColorAndVertex(Tessellator tessellator, float red, float green, float blue, double x,
+    private void optiFuture$setColorAndVertex(Tessellator tessellator, float red, float green, float blue, double x,
         double y, double z, double u, double v) {
         if (ColorizeBlock.isSmooth) {
             tessellator.setColorOpaque_F(red, green, blue);
@@ -83,7 +96,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/block/BlockCauldron;getBlockTextureFromSide(I)Lnet/minecraft/util/IIcon;",
             shift = At.Shift.AFTER))
-    private void modifyRenderBlockCauldron1(BlockCauldron block, int x, int y, int z,
+    private void optiFuture$tintCauldronTopWater(BlockCauldron block, int x, int y, int z,
         CallbackInfoReturnable<Boolean> cir) {
         ColorizeBlock.computeWaterColor();
         Tessellator.instance.setColorOpaque_F(Colorizer.setColor[0], Colorizer.setColor[1], Colorizer.setColor[2]);
@@ -94,14 +107,14 @@ public abstract class MixinRenderBlocks {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/BlockLiquid;getLiquidIcon(Ljava/lang/String;)Lnet/minecraft/util/IIcon;"))
-    private void modifyRenderBlockCauldron2(BlockCauldron block, int x, int y, int z,
+    private void optiFuture$tintCauldronWaterIcon(BlockCauldron block, int x, int y, int z,
         CallbackInfoReturnable<Boolean> cir) {
         ColorizeBlock.computeWaterColor();
         Tessellator.instance.setColorOpaque_F(Colorizer.setColor[0], Colorizer.setColor[1], Colorizer.setColor[2]);
     }
 
     @Inject(method = "renderBlockRedstoneWire(Lnet/minecraft/block/Block;III)Z", at = @At("HEAD"))
-    private void calculateComputeRedstoneWireColor(Block block, int x, int y, int z,
+    private void optiFuture$computeRedstoneWireColor(Block block, int x, int y, int z,
         CallbackInfoReturnable<Boolean> cir,
         @Share("computeRedstoneWireColor") LocalBooleanRef computeRedstoneWireColor, @Share("red") LocalFloatRef red,
         @Share("green") LocalFloatRef green, @Share("blue") LocalFloatRef blue) {
@@ -118,7 +131,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 0))
-    private void modifyColorRedstoneWire1(Args args,
+    private void optiFuture$applyRedstoneWireColor1(Args args,
         @Share("computeRedstoneWireColor") LocalBooleanRef computeRedstoneWireColor, @Share("red") LocalFloatRef red,
         @Share("green") LocalFloatRef green, @Share("blue") LocalFloatRef blue) {
         if (computeRedstoneWireColor.get()) {
@@ -134,7 +147,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 4))
-    private void modifyColorRedstoneWire2(Args args,
+    private void optiFuture$applyRedstoneWireColor2(Args args,
         @Share("computeRedstoneWireColor") LocalBooleanRef computeRedstoneWireColor, @Share("red") LocalFloatRef red,
         @Share("green") LocalFloatRef green, @Share("blue") LocalFloatRef blue) {
         if (computeRedstoneWireColor.get()) {
@@ -150,7 +163,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 6))
-    private void modifyColorRedstoneWire3(Args args,
+    private void optiFuture$applyRedstoneWireColor3(Args args,
         @Share("computeRedstoneWireColor") LocalBooleanRef computeRedstoneWireColor, @Share("red") LocalFloatRef red,
         @Share("green") LocalFloatRef green, @Share("blue") LocalFloatRef blue) {
         if (computeRedstoneWireColor.get()) {
@@ -166,7 +179,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 8))
-    private void modifyColorRedstoneWire4(Args args,
+    private void optiFuture$applyRedstoneWireColor4(Args args,
         @Share("computeRedstoneWireColor") LocalBooleanRef computeRedstoneWireColor, @Share("red") LocalFloatRef red,
         @Share("green") LocalFloatRef green, @Share("blue") LocalFloatRef blue) {
         if (computeRedstoneWireColor.get()) {
@@ -182,7 +195,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 10))
-    private void modifyColorRedstoneWire5(Args args,
+    private void optiFuture$applyRedstoneWireColor5(Args args,
         @Share("computeRedstoneWireColor") LocalBooleanRef computeRedstoneWireColor, @Share("red") LocalFloatRef red,
         @Share("green") LocalFloatRef green, @Share("blue") LocalFloatRef blue) {
         if (computeRedstoneWireColor.get()) {
@@ -195,7 +208,7 @@ public abstract class MixinRenderBlocks {
     @Inject(
         method = "renderStandardBlock(Lnet/minecraft/block/Block;III)Z",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;isAmbientOcclusionEnabled()Z"))
-    private void modifyRenderStandardBlock(Block block, int x, int y, int z, CallbackInfoReturnable<Boolean> cir) {
+    private void optiFuture$setupStandardBlockColor(Block block, int x, int y, int z, CallbackInfoReturnable<Boolean> cir) {
 
         // TODO: capture local variables to prevent double math
         int l = block.colorMultiplier(this.blockAccess, x, y, z);
@@ -218,7 +231,7 @@ public abstract class MixinRenderBlocks {
     @ModifyConstant(
         method = "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
         constant = { @Constant(floatValue = 0.5F), @Constant(floatValue = 0.6F), @Constant(floatValue = 0.8F) })
-    private float redirectAOBaseMultiplier(float constant) {
+    private float optiFuture$redirectAOBaseMultiplier(float constant) {
         return RenderPass.getAOBaseMultiplier(constant);
     }
 
@@ -228,7 +241,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 0),
         ordinal = 1)
-    private boolean redirectColorMultiplier1(boolean value) {
+    private boolean optiFuture$useColorMultiplier1(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(0);
     }
 
@@ -236,7 +249,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 1),
         ordinal = 1)
-    private boolean redirectColorMultiplier2(boolean value) {
+    private boolean optiFuture$useColorMultiplier2(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(2);
     }
 
@@ -244,7 +257,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 2),
         ordinal = 1)
-    private boolean redirectColorMultiplier3(boolean value) {
+    private boolean optiFuture$useColorMultiplier3(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(3);
     }
 
@@ -252,7 +265,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 3),
         ordinal = 1)
-    private boolean redirectColorMultiplier4(boolean value) {
+    private boolean optiFuture$useColorMultiplier4(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(4);
     }
 
@@ -260,7 +273,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusion(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 4),
         ordinal = 1)
-    private boolean redirectColorMultiplier5(boolean value) {
+    private boolean optiFuture$useColorMultiplier5(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(5);
     }
 
@@ -268,7 +281,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 0),
         ordinal = 1)
-    private boolean redirectColorMultiplierPartial1(boolean value) {
+    private boolean optiFuture$useColorMultiplierPartial1(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(0);
     }
 
@@ -276,7 +289,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 1),
         ordinal = 1)
-    private boolean redirectColorMultiplierPartial2(boolean value) {
+    private boolean optiFuture$useColorMultiplierPartial2(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(2);
     }
 
@@ -284,7 +297,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 2),
         ordinal = 1)
-    private boolean redirectColorMultiplierPartial3(boolean value) {
+    private boolean optiFuture$useColorMultiplierPartial3(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(3);
     }
 
@@ -292,7 +305,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 3),
         ordinal = 1)
-    private boolean redirectColorMultiplierPartial4(boolean value) {
+    private boolean optiFuture$useColorMultiplierPartial4(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(4);
     }
 
@@ -300,7 +313,7 @@ public abstract class MixinRenderBlocks {
         method = "renderStandardBlockWithAmbientOcclusionPartial(Lnet/minecraft/block/Block;IIIFFF)Z",
         at = @At(value = "LOAD", ordinal = 4),
         ordinal = 1)
-    private boolean redirectColorMultiplierPartial5(boolean value) {
+    private boolean optiFuture$useColorMultiplierPartial5(boolean value) {
         return RenderBlocksUtils.useColorMultiplier(5);
     }
 
@@ -325,7 +338,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceYNeg(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
             ordinal = 0))
-    private void mcpatcherforge$setupBlockSmoothingBottom(Block block, int x, int y, int z, float r, float g, float b,
+    private void optiFuture$setupBlockSmoothingBottom(Block block, int x, int y, int z, float r, float g, float b,
         CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
         @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
         ColorizeBlock.setupBlockSmoothing(
@@ -349,7 +362,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceYPos(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
             ordinal = 0))
-    private void mcpatcherforge$setupBlockSmoothingTop(Block block, int x, int y, int z, float r, float g, float b,
+    private void optiFuture$setupBlockSmoothingTop(Block block, int x, int y, int z, float r, float g, float b,
         CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
         @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
         ColorizeBlock.setupBlockSmoothing(
@@ -378,7 +391,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceZNeg(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
             ordinal = 0))
-    private void mcpatcherforge$setupBlockSmoothingNorth(Block block, int x, int y, int z, float r, float g, float b,
+    private void optiFuture$setupBlockSmoothingNorth(Block block, int x, int y, int z, float r, float g, float b,
         CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
         @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
         ColorizeBlock.setupBlockSmoothing(
@@ -402,7 +415,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceZPos(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
             ordinal = 0))
-    private void mcpatcherforge$setupBlockSmoothingSouth(Block block, int x, int y, int z, float r, float g, float b,
+    private void optiFuture$setupBlockSmoothingSouth(Block block, int x, int y, int z, float r, float g, float b,
         CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
         @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
         ColorizeBlock.setupBlockSmoothing(
@@ -426,7 +439,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceXNeg(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
             ordinal = 0))
-    private void mcpatcherforge$setupBlockSmoothingWest(Block block, int x, int y, int z, float r, float g, float b,
+    private void optiFuture$setupBlockSmoothingWest(Block block, int x, int y, int z, float r, float g, float b,
         CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
         @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
         ColorizeBlock.setupBlockSmoothing(
@@ -450,7 +463,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceXPos(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
             ordinal = 0))
-    private void mcpatcherforge$setupBlockSmoothingEast(Block block, int x, int y, int z, float r, float g, float b,
+    private void optiFuture$setupBlockSmoothingEast(Block block, int x, int y, int z, float r, float g, float b,
         CallbackInfoReturnable<Boolean> cir, @Local(index = 9) float topLeft, @Local(index = 10) float bottomLeft,
         @Local(index = 11) float bottomRight, @Local(index = 12) float topRight) {
         ColorizeBlock.setupBlockSmoothing(
@@ -473,7 +486,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 0))
-    private void redirectColorMultiplier1(Tessellator instance, float red, float green, float blue) {
+    private void optiFuture$overrideColorMultiplier1(Tessellator instance, float red, float green, float blue) {
         Tessellator.instance.setColorOpaque_F(
             RenderBlocksUtils.getColorMultiplierRed(0),
             RenderBlocksUtils.getColorMultiplierGreen(0),
@@ -486,7 +499,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 1))
-    private void redirectColorMultiplier2(Tessellator instance, float red, float green, float blue) {
+    private void optiFuture$overrideColorMultiplier2(Tessellator instance, float red, float green, float blue) {
         Tessellator.instance.setColorOpaque_F(
             RenderBlocksUtils.getColorMultiplierRed(1),
             RenderBlocksUtils.getColorMultiplierGreen(1),
@@ -499,7 +512,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 2))
-    private void redirectColorMultiplier3(Tessellator instance, float red, float green, float blue) {
+    private void optiFuture$overrideColorMultiplier3(Tessellator instance, float red, float green, float blue) {
         Tessellator.instance.setColorOpaque_F(
             RenderBlocksUtils.getColorMultiplierRed(2),
             RenderBlocksUtils.getColorMultiplierGreen(2),
@@ -512,7 +525,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 4))
-    private void redirectColorMultiplier4(Tessellator instance, float red, float green, float blue) {
+    private void optiFuture$overrideColorMultiplier4(Tessellator instance, float red, float green, float blue) {
         Tessellator.instance.setColorOpaque_F(
             RenderBlocksUtils.getColorMultiplierRed(3),
             RenderBlocksUtils.getColorMultiplierGreen(3),
@@ -525,7 +538,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 6))
-    private void redirectColorMultiplier5(Tessellator instance, float red, float green, float blue) {
+    private void optiFuture$overrideColorMultiplier5(Tessellator instance, float red, float green, float blue) {
         Tessellator.instance.setColorOpaque_F(
             RenderBlocksUtils.getColorMultiplierRed(4),
             RenderBlocksUtils.getColorMultiplierGreen(4),
@@ -538,7 +551,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 8))
-    private void redirectColorMultiplier6(Tessellator instance, float red, float green, float blue) {
+    private void optiFuture$overrideColorMultiplier6(Tessellator instance, float red, float green, float blue) {
         Tessellator.instance.setColorOpaque_F(
             RenderBlocksUtils.getColorMultiplierRed(5),
             RenderBlocksUtils.getColorMultiplierGreen(5),
@@ -555,7 +568,7 @@ public abstract class MixinRenderBlocks {
      * 均值中已经由 AO_BASE 包含了原版的逐面亮度系数。
      */
     @Unique
-    private boolean mcpatcherforge$smoothSandFallingFace(Tessellator tessellator, World world, Block block, int x,
+    private boolean optiFuture$smoothSandFallingFace(Tessellator tessellator, World world, Block block, int x,
         int y, int z, int face) {
         if (!ColorizeBlock.setupBlockSmoothing((RenderBlocks) (Object) this, block, world, x, y, z, face)) {
             return false;
@@ -581,9 +594,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 0))
-    private boolean modifyRenderBlockSandFalling0(Tessellator tessellator, float red, float green, float blue,
+    private boolean optiFuture$wrapSandFallingColor0(Tessellator tessellator, float red, float green, float blue,
         Block block, World world, int x, int y, int z) {
-        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 0);
+        return !optiFuture$smoothSandFallingFace(tessellator, world, block, x, y, z, 0);
     }
 
     @WrapWithCondition(
@@ -592,9 +605,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 1))
-    private boolean modifyRenderBlockSandFalling1(Tessellator tessellator, float red, float green, float blue,
+    private boolean optiFuture$wrapSandFallingColor1(Tessellator tessellator, float red, float green, float blue,
         Block block, World world, int x, int y, int z) {
-        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 1);
+        return !optiFuture$smoothSandFallingFace(tessellator, world, block, x, y, z, 1);
     }
 
     @WrapWithCondition(
@@ -603,9 +616,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 2))
-    private boolean modifyRenderBlockSandFalling2(Tessellator tessellator, float red, float green, float blue,
+    private boolean optiFuture$wrapSandFallingColor2(Tessellator tessellator, float red, float green, float blue,
         Block block, World world, int x, int y, int z) {
-        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 2);
+        return !optiFuture$smoothSandFallingFace(tessellator, world, block, x, y, z, 2);
     }
 
     @WrapWithCondition(
@@ -614,9 +627,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 3))
-    private boolean modifyRenderBlockSandFalling3(Tessellator tessellator, float red, float green, float blue,
+    private boolean optiFuture$wrapSandFallingColor3(Tessellator tessellator, float red, float green, float blue,
         Block block, World world, int x, int y, int z) {
-        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 3);
+        return !optiFuture$smoothSandFallingFace(tessellator, world, block, x, y, z, 3);
     }
 
     @WrapWithCondition(
@@ -625,9 +638,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 4))
-    private boolean modifyRenderBlockSandFalling4(Tessellator tessellator, float red, float green, float blue,
+    private boolean optiFuture$wrapSandFallingColor4(Tessellator tessellator, float red, float green, float blue,
         Block block, World world, int x, int y, int z) {
-        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 4);
+        return !optiFuture$smoothSandFallingFace(tessellator, world, block, x, y, z, 4);
     }
 
     @WrapWithCondition(
@@ -636,9 +649,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 5))
-    private boolean modifyRenderBlockSandFalling5(Tessellator tessellator, float red, float green, float blue,
+    private boolean optiFuture$wrapSandFallingColor5(Tessellator tessellator, float red, float green, float blue,
         Block block, World world, int x, int y, int z) {
-        return !mcpatcherforge$smoothSandFallingFace(tessellator, world, block, x, y, z, 5);
+        return !optiFuture$smoothSandFallingFace(tessellator, world, block, x, y, z, 5);
     }
 
     @Redirect(
@@ -647,7 +660,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;setColorOpaque_F(FFF)V",
             ordinal = 0))
-    private void mcpatcherforge$handleSmoothing(Tessellator tessellator, float red, float green, float blue,
+    private void optiFuture$handleSmoothing(Tessellator tessellator, float red, float green, float blue,
         Block block, int x, int y, int z) {
         if (!(ColorizeBlock.isSmooth = ColorizeBlock
             .setupBlockSmoothing((RenderBlocks) (Object) this, block, this.blockAccess, x, y, z, 1 + 6))) {
@@ -663,9 +676,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 0))
-    private void mcpatcherforge$redirectColor1(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor1(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedTopLeft,
             this.colorGreenTopLeft,
@@ -683,9 +696,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 1))
-    private void mcpatcherforge$redirectColor2(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor2(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedBottomLeft,
             this.colorGreenBottomLeft,
@@ -703,9 +716,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 2))
-    private void mcpatcherforge$redirectColor3(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor3(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedBottomRight,
             this.colorGreenBottomRight,
@@ -723,9 +736,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 3))
-    private void mcpatcherforge$redirectColor4(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor4(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedTopRight,
             this.colorGreenTopRight,
@@ -743,9 +756,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 4))
-    private void mcpatcherforge$redirectColor5(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor5(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedTopLeft,
             this.colorGreenTopLeft,
@@ -763,9 +776,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 5))
-    private void mcpatcherforge$redirectColor6(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor6(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedTopRight,
             this.colorGreenTopRight,
@@ -783,9 +796,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 6))
-    private void mcpatcherforge$redirectColor7(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor7(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedBottomRight,
             this.colorGreenBottomRight,
@@ -803,9 +816,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 7))
-    private void mcpatcherforge$redirectColor8(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor8(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedBottomLeft,
             this.colorGreenBottomLeft,
@@ -823,7 +836,7 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;renderFaceYNeg(Lnet/minecraft/block/Block;DDDLnet/minecraft/util/IIcon;)V",
             shift = At.Shift.AFTER))
-    private void mcpatcherforge$setEnableAO(Block block, int x, int y, int z, CallbackInfoReturnable<Boolean> cir) {
+    private void optiFuture$setEnableAO(Block block, int x, int y, int z, CallbackInfoReturnable<Boolean> cir) {
         // Reset AFTER renderFaceYNeg: the ctm_cc redirect enables AO right before the call so
         // the bottom face uses per-vertex smoothed colors; resetting before the call (no shift)
         // would nullify that.
@@ -838,9 +851,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 8))
-    private void mcpatcherforge$redirectColor11(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor11(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedTopLeft,
             this.colorGreenTopLeft,
@@ -858,9 +871,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 9))
-    private void mcpatcherforge$redirectColor12(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor12(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedBottomLeft,
             this.colorGreenBottomLeft,
@@ -878,9 +891,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 10))
-    private void mcpatcherforge$redirectColor13(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor13(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedBottomRight,
             this.colorGreenBottomRight,
@@ -898,9 +911,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 11))
-    private void mcpatcherforge$redirectColor14(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor14(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedTopRight,
             this.colorGreenTopRight,
@@ -918,9 +931,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 12))
-    private void mcpatcherforge$redirectColor15(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor15(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedTopRight,
             this.colorGreenTopRight,
@@ -938,9 +951,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 13))
-    private void mcpatcherforge$redirectColor16(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor16(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedBottomRight,
             this.colorGreenBottomRight,
@@ -958,9 +971,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 14))
-    private void mcpatcherforge$redirectColor17(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor17(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedBottomLeft,
             this.colorGreenBottomLeft,
@@ -978,9 +991,9 @@ public abstract class MixinRenderBlocks {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/Tessellator;addVertexWithUV(DDDDD)V",
             ordinal = 15))
-    private void mcpatcherforge$redirectColor18(Tessellator tessellator, double x, double y, double z, double u,
+    private void optiFuture$redirectColor18(Tessellator tessellator, double x, double y, double z, double u,
         double v) {
-        mcpatcherforge$setColorAndVertex(
+        optiFuture$setColorAndVertex(
             tessellator,
             this.colorRedTopLeft,
             this.colorGreenTopLeft,

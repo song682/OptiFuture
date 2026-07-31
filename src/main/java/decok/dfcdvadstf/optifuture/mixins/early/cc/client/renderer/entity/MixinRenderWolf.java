@@ -11,17 +11,21 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.prupe.mcpatcher.cc.ColorizeEntity;
 
+/**
+ * Recolors the wolf's collar render pass so dyed collars follow pack-defined
+ * colors instead of the fixed vanilla dye palette.
+ * <p>
+ * 重着色狼的项圈渲染阶段，使染色项圈跟随资源包定义的颜色，而非原版固定的染料调色板。
+ */
 @Mixin(RenderWolf.class)
 public class MixinRenderWolf {
 
     @Redirect(
         method = "shouldRenderPass(Lnet/minecraft/entity/passive/EntityWolf;IF)I",
         at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glColor3f(FFF)V", ordinal = 1, remap = false))
-    private void modifyShouldRenderPass2(float red, float green, float blue, EntityWolf entity) {
-        int collarColor = entity.getCollarColor();
-        GL11.glColor3f(
-            ColorizeEntity.getWolfCollarColor(EntitySheep.fleeceColorTable[collarColor], collarColor)[0],
-            ColorizeEntity.getWolfCollarColor(EntitySheep.fleeceColorTable[collarColor], collarColor)[1],
-            ColorizeEntity.getWolfCollarColor(EntitySheep.fleeceColorTable[collarColor], collarColor)[2]);
+    private void optiFuture$recolorCollar(float red, float green, float blue, EntityWolf wolf) {
+        int collarColor = wolf.getCollarColor();
+        float[] rgb = ColorizeEntity.getWolfCollarColor(EntitySheep.fleeceColorTable[collarColor], collarColor);
+        GL11.glColor3f(rgb[0], rgb[1], rgb[2]);
     }
 }

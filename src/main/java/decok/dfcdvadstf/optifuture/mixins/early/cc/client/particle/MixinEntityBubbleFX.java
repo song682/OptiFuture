@@ -12,6 +12,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.prupe.mcpatcher.cc.ColorizeBlock;
 import com.prupe.mcpatcher.cc.Colorizer;
 
+/**
+ * Tints underwater bubble particles with the biome water color once the particle
+ * has finished vanilla construction, falling back to plain white when no custom
+ * color applies.
+ * <p>
+ * 在气泡粒子完成原版构造后，用群系水色为其着色；若无自定义颜色则回退为纯白。
+ */
 @Mixin(EntityBubbleFX.class)
 public abstract class MixinEntityBubbleFX extends EntityFX {
 
@@ -20,7 +27,7 @@ public abstract class MixinEntityBubbleFX extends EntityFX {
     }
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;DDDDDD)V", at = @At("RETURN"))
-    private void modifyConstructor(World world, double x, double y, double z, double motionX, double motionY,
+    private void optiFuture$tintBubble(World world, double x, double y, double z, double motionX, double motionY,
         double motionZ, CallbackInfo ci) {
         if (ColorizeBlock.computeWaterColor(false, (int) this.posX, (int) this.posY, (int) this.posZ)) {
             this.particleRed = Colorizer.setColor[0];

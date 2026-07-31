@@ -20,6 +20,16 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import com.prupe.mcpatcher.cit.CITUtils;
 
+/**
+ * Rewrites the living-entity render loop so CIT armor enchantment overlays can
+ * replace the vanilla armor glint. When a CIT enchantment applies, it is drawn
+ * for the pass; otherwise the code falls back to the original vanilla glint,
+ * which is why the vanilla {@code if} becomes an {@code else if} here.
+ * <p>
+ * 重写生物实体的渲染循环，使 CIT 护甲附魔覆盖层能够替代原版护甲光效。
+ * 当存在适用的 CIT 附魔时，为该渲染阶段绘制该附魔；否则回退到原版光效，
+ * 这也是此处原版 {@code if} 变为 {@code else if} 的原因。
+ */
 @Mixin(RendererLivingEntity.class)
 public abstract class MixinRenderEntityLiving extends Render {
 
@@ -78,17 +88,19 @@ public abstract class MixinRenderEntityLiving extends Render {
         double p_77033_6_);
 
     /**
-     * @author Mist475 (adapted from Paul Rupe)
-     * @reason if statement modified into else-if
+     * @author OptiFutureOptimized
+     * @reason Insert CIT armor enchantment overlays into the render-pass loop;
+     *         the vanilla glint block becomes an else-if fallback, which cannot
+     *         be expressed with a simple injector.
      */
     @SuppressWarnings("DuplicatedCode")
     @Overwrite
-    public void doRender(EntityLivingBase entity, double x, double y, double z, float p_76986_8_, float p_76986_9_) {
+    public void doRender(EntityLivingBase entity, double x, double y, double z, float yaw, float partialTicks) {
         if (MinecraftForge.EVENT_BUS
             .post(new RenderLivingEvent.Pre(entity, (RendererLivingEntity) (Object) this, x, y, z))) return;
         GL11.glPushMatrix();
         GL11.glDisable(GL11.GL_CULL_FACE);
-        this.mainModel.onGround = this.renderSwingProgress(entity, p_76986_9_);
+        this.mainModel.onGround = this.renderSwingProgress(entity, partialTicks);
 
         if (this.renderPassModel != null) {
             this.renderPassModel.onGround = this.mainModel.onGround;
@@ -107,103 +119,96 @@ public abstract class MixinRenderEntityLiving extends Render {
         }
 
         try {
-            float f2 = this.interpolateRotation(entity.prevRenderYawOffset, entity.renderYawOffset, p_76986_9_);
-            float f3 = this.interpolateRotation(entity.prevRotationYawHead, entity.rotationYawHead, p_76986_9_);
-            float f4;
+            float bodyYaw = this.interpolateRotation(entity.prevRenderYawOffset, entity.renderYawOffset, partialTicks);
+            float headYaw = this.interpolateRotation(entity.prevRotationYawHead, entity.rotationYawHead, partialTicks);
 
             if (entity.isRiding() && entity.ridingEntity instanceof EntityLivingBase) {
-                EntityLivingBase entitylivingbase1 = (EntityLivingBase) entity.ridingEntity;
-                f2 = this.interpolateRotation(
-                    entitylivingbase1.prevRenderYawOffset,
-                    entitylivingbase1.renderYawOffset,
-                    p_76986_9_);
-                f4 = MathHelper.wrapAngleTo180_float(f3 - f2);
+                EntityLivingBase mount = (EntityLivingBase) entity.ridingEntity;
+                bodyYaw = this.interpolateRotation(mount.prevRenderYawOffset, mount.renderYawOffset, partialTicks);
+                float yawDelta = MathHelper.wrapAngleTo180_float(headYaw - bodyYaw);
 
-                if (f4 < -85.0F) {
-                    f4 = -85.0F;
+                if (yawDelta < -85.0F) {
+                    yawDelta = -85.0F;
                 }
 
-                if (f4 >= 85.0F) {
-                    f4 = 85.0F;
+                if (yawDelta >= 85.0F) {
+                    yawDelta = 85.0F;
                 }
 
-                f2 = f3 - f4;
+                bodyYaw = headYaw - yawDelta;
 
-                if (f4 * f4 > 2500.0F) {
-                    f2 += f4 * 0.2F;
+                if (yawDelta * yawDelta > 2500.0F) {
+                    bodyYaw += yawDelta * 0.2F;
                 }
             }
 
-            float f13 = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * p_76986_9_;
+            float pitch = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks;
             this.renderLivingAt(entity, x, y, z);
-            f4 = this.handleRotationFloat(entity, p_76986_9_);
-            this.rotateCorpse(entity, f4, f2, p_76986_9_);
-            float f5 = 0.0625F;
+            float ageInTicks = this.handleRotationFloat(entity, partialTicks);
+            this.rotateCorpse(entity, ageInTicks, bodyYaw, partialTicks);
+            float scale = 0.0625F;
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
             GL11.glScalef(-1.0F, -1.0F, 1.0F);
-            this.preRenderCallback(entity, p_76986_9_);
-            GL11.glTranslatef(0.0F, -24.0F * f5 - 0.0078125F, 0.0F);
-            float f6 = entity.prevLimbSwingAmount + (entity.limbSwingAmount - entity.prevLimbSwingAmount) * p_76986_9_;
-            float f7 = entity.limbSwing - entity.limbSwingAmount * (1.0F - p_76986_9_);
+            this.preRenderCallback(entity, partialTicks);
+            GL11.glTranslatef(0.0F, -24.0F * scale - 0.0078125F, 0.0F);
+            float limbSwingAmount = entity.prevLimbSwingAmount
+                + (entity.limbSwingAmount - entity.prevLimbSwingAmount) * partialTicks;
+            float limbSwing = entity.limbSwing - entity.limbSwingAmount * (1.0F - partialTicks);
 
             if (entity.isChild()) {
-                f7 *= 3.0F;
+                limbSwing *= 3.0F;
             }
 
-            if (f6 > 1.0F) {
-                f6 = 1.0F;
+            if (limbSwingAmount > 1.0F) {
+                limbSwingAmount = 1.0F;
             }
 
             GL11.glEnable(GL11.GL_ALPHA_TEST);
-            this.mainModel.setLivingAnimations(entity, f7, f6, p_76986_9_);
-            this.renderModel(entity, f7, f6, f4, f3 - f2, f13, f5);
-            int j;
-            float f8;
-            float f9;
-            float f10;
+            this.mainModel.setLivingAnimations(entity, limbSwing, limbSwingAmount, partialTicks);
+            this.renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw - bodyYaw, pitch, scale);
+            int colorMultiplier;
 
-            for (int i = 0; i < 4; ++i) {
-                j = this.shouldRenderPass(entity, i, p_76986_9_);
+            for (int pass = 0; pass < 4; ++pass) {
+                int passFlags = this.shouldRenderPass(entity, pass, partialTicks);
 
-                if (j > 0) {
-                    this.renderPassModel.setLivingAnimations(entity, f7, f6, p_76986_9_);
-                    this.renderPassModel.render(entity, f7, f6, f4, f3 - f2, f13, f5);
+                if (passFlags > 0) {
+                    this.renderPassModel.setLivingAnimations(entity, limbSwing, limbSwingAmount, partialTicks);
+                    this.renderPassModel.render(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw - bodyYaw, pitch, scale);
 
-                    if ((j & 240) == 16) {
-                        this.func_82408_c(entity, i, p_76986_9_);
-                        this.renderPassModel.render(entity, f7, f6, f4, f3 - f2, f13, f5);
+                    if ((passFlags & 240) == 16) {
+                        this.func_82408_c(entity, pass, partialTicks);
+                        this.renderPassModel.render(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw - bodyYaw, pitch, scale);
                     }
                     // patch start
-                    if (CITUtils.setupArmorEnchantments(entity, i)) {
+                    if (CITUtils.setupArmorEnchantments(entity, pass)) {
                         while (CITUtils.preRenderArmorEnchantment()) {
-                            this.renderPassModel.render(entity, f7, f6, f4, f3 - f2, f13, f5);
+                            this.renderPassModel.render(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw - bodyYaw, pitch, scale);
                             CITUtils.postRenderArmorEnchantment();
                         }
-                    } else if ((j & 15) == 15) {
+                    } else if ((passFlags & 15) == 15) {
                         // if -> else if
                         // patch end
-                        f8 = (float) entity.ticksExisted + p_76986_9_;
+                        float glintTime = (float) entity.ticksExisted + partialTicks;
                         this.bindTexture(RES_ITEM_GLINT);
                         GL11.glEnable(GL11.GL_BLEND);
-                        f9 = 0.5F;
-                        GL11.glColor4f(f9, f9, f9, 1.0F);
+                        GL11.glColor4f(0.5F, 0.5F, 0.5F, 1.0F);
                         GL11.glDepthFunc(GL11.GL_EQUAL);
                         GL11.glDepthMask(false);
 
-                        for (int k = 0; k < 2; ++k) {
+                        for (int layer = 0; layer < 2; ++layer) {
                             GL11.glDisable(GL11.GL_LIGHTING);
-                            f10 = 0.76F;
-                            GL11.glColor4f(0.5F * f10, 0.25F * f10, 0.8F * f10, 1.0F);
+                            float glintShade = 0.76F;
+                            GL11.glColor4f(0.5F * glintShade, 0.25F * glintShade, 0.8F * glintShade, 1.0F);
                             GL11.glBlendFunc(GL11.GL_SRC_COLOR, GL11.GL_ONE);
                             GL11.glMatrixMode(GL11.GL_TEXTURE);
                             GL11.glLoadIdentity();
-                            float f11 = f8 * (0.001F + (float) k * 0.003F) * 20.0F;
-                            float f12 = 0.33333334F;
-                            GL11.glScalef(f12, f12, f12);
-                            GL11.glRotatef(30.0F - (float) k * 60.0F, 0.0F, 0.0F, 1.0F);
-                            GL11.glTranslatef(0.0F, f11, 0.0F);
+                            float glintScroll = glintTime * (0.001F + (float) layer * 0.003F) * 20.0F;
+                            float glintScale = 0.33333334F;
+                            GL11.glScalef(glintScale, glintScale, glintScale);
+                            GL11.glRotatef(30.0F - (float) layer * 60.0F, 0.0F, 0.0F, 1.0F);
+                            GL11.glTranslatef(0.0F, glintScroll, 0.0F);
                             GL11.glMatrixMode(GL11.GL_MODELVIEW);
-                            this.renderPassModel.render(entity, f7, f6, f4, f3 - f2, f13, f5);
+                            this.renderPassModel.render(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw - bodyYaw, pitch, scale);
                         }
 
                         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -222,14 +227,14 @@ public abstract class MixinRenderEntityLiving extends Render {
             }
 
             GL11.glDepthMask(true);
-            this.renderEquippedItems(entity, p_76986_9_);
-            float f14 = entity.getBrightness(p_76986_9_);
-            j = this.getColorMultiplier(entity, f14, p_76986_9_);
+            this.renderEquippedItems(entity, partialTicks);
+            float brightness = entity.getBrightness(partialTicks);
+            colorMultiplier = this.getColorMultiplier(entity, brightness, partialTicks);
             OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
 
-            if ((j >> 24 & 255) > 0 || entity.hurtTime > 0 || entity.deathTime > 0) {
+            if ((colorMultiplier >> 24 & 255) > 0 || entity.hurtTime > 0 || entity.deathTime > 0) {
                 GL11.glDisable(GL11.GL_TEXTURE_2D);
                 GL11.glDisable(GL11.GL_ALPHA_TEST);
                 GL11.glEnable(GL11.GL_BLEND);
@@ -237,29 +242,29 @@ public abstract class MixinRenderEntityLiving extends Render {
                 GL11.glDepthFunc(GL11.GL_EQUAL);
 
                 if (entity.hurtTime > 0 || entity.deathTime > 0) {
-                    GL11.glColor4f(f14, 0.0F, 0.0F, 0.4F);
-                    this.mainModel.render(entity, f7, f6, f4, f3 - f2, f13, f5);
+                    GL11.glColor4f(brightness, 0.0F, 0.0F, 0.4F);
+                    this.mainModel.render(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw - bodyYaw, pitch, scale);
 
-                    for (int l = 0; l < 4; ++l) {
-                        if (this.inheritRenderPass(entity, l, p_76986_9_) >= 0) {
-                            GL11.glColor4f(f14, 0.0F, 0.0F, 0.4F);
-                            this.renderPassModel.render(entity, f7, f6, f4, f3 - f2, f13, f5);
+                    for (int hurtPass = 0; hurtPass < 4; ++hurtPass) {
+                        if (this.inheritRenderPass(entity, hurtPass, partialTicks) >= 0) {
+                            GL11.glColor4f(brightness, 0.0F, 0.0F, 0.4F);
+                            this.renderPassModel.render(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw - bodyYaw, pitch, scale);
                         }
                     }
                 }
 
-                if ((j >> 24 & 255) > 0) {
-                    f8 = (float) (j >> 16 & 255) / 255.0F;
-                    f9 = (float) (j >> 8 & 255) / 255.0F;
-                    float f15 = (float) (j & 255) / 255.0F;
-                    f10 = (float) (j >> 24 & 255) / 255.0F;
-                    GL11.glColor4f(f8, f9, f15, f10);
-                    this.mainModel.render(entity, f7, f6, f4, f3 - f2, f13, f5);
+                if ((colorMultiplier >> 24 & 255) > 0) {
+                    float overlayRed = (float) (colorMultiplier >> 16 & 255) / 255.0F;
+                    float overlayGreen = (float) (colorMultiplier >> 8 & 255) / 255.0F;
+                    float overlayBlue = (float) (colorMultiplier & 255) / 255.0F;
+                    float overlayAlpha = (float) (colorMultiplier >> 24 & 255) / 255.0F;
+                    GL11.glColor4f(overlayRed, overlayGreen, overlayBlue, overlayAlpha);
+                    this.mainModel.render(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw - bodyYaw, pitch, scale);
 
-                    for (int i1 = 0; i1 < 4; ++i1) {
-                        if (this.inheritRenderPass(entity, i1, p_76986_9_) >= 0) {
-                            GL11.glColor4f(f8, f9, f15, f10);
-                            this.renderPassModel.render(entity, f7, f6, f4, f3 - f2, f13, f5);
+                    for (int tintPass = 0; tintPass < 4; ++tintPass) {
+                        if (this.inheritRenderPass(entity, tintPass, partialTicks) >= 0) {
+                            GL11.glColor4f(overlayRed, overlayGreen, overlayBlue, overlayAlpha);
+                            this.renderPassModel.render(entity, limbSwing, limbSwingAmount, ageInTicks, headYaw - bodyYaw, pitch, scale);
                         }
                     }
                 }

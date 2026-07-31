@@ -6,7 +6,17 @@ import java.util.logging.Level;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.config.Configuration;
 
-// Adapted from hodgepodge
+/**
+ * Read-only view over "config/mcpatcherforge.cfg" (adapted from Hodgepodge).
+ * Each public field mirrors one configuration key, so the {@link Mixins}
+ * applyIf gates and the core logic can read the user's settings directly.
+ * Existing keys must not be renamed or the user's cfg would silently lose
+ * values.
+ * <p>
+ * "config/mcpatcherforge.cfg" 的只读视图（改编自 Hodgepodge）。每个公开
+ * 字段对应一个配置键，{@link Mixins} 的 applyIf 门控与核心逻辑可直接读取
+ * 用户设置。既有键名不得改名，否则用户的 cfg 会静默丢失配置值。
+ */
 public class MCPatcherForgeConfig {
 
     private static MCPatcherForgeConfig config;

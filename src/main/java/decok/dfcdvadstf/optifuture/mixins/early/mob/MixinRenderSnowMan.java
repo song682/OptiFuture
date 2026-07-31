@@ -11,6 +11,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.prupe.mcpatcher.mob.MobOverlay;
 
+/**
+ * Suppresses the vanilla pumpkin item render on a snow golem's head whenever a
+ * custom snowman overlay texture takes over the head decoration.
+ * <p>
+ * 当自定义雪人叠加材质接管头部装饰时，抑制原版在雪傀儡头部渲染南瓜
+ * 物品的逻辑。
+ */
 @Mixin(RenderSnowMan.class)
 public abstract class MixinRenderSnowMan {
 
@@ -19,8 +26,8 @@ public abstract class MixinRenderSnowMan {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/ItemRenderer;renderItem(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/item/ItemStack;I)V"))
-    private boolean modifyRenderEquippedItems(ItemRenderer renderer, EntityLivingBase entity, ItemStack itemStack,
-        int i) {
+    private boolean optiFuture$skipPumpkinWhenOverlaid(ItemRenderer renderer, EntityLivingBase entity,
+        ItemStack itemStack, int renderPass) {
         return !MobOverlay.renderSnowmanOverlay(entity);
     }
 }

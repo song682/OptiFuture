@@ -12,6 +12,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.prupe.mcpatcher.mob.MobRandomizer;
 
+/**
+ * Randomizes the sheep's wool overlay texture so it matches the randomized
+ * body skin during the wool render pass.
+ * <p>
+ * 随机化绵羊的羊毛叠加材质，使其在羊毛渲染阶段与随机化的身体皮肤一致。
+ */
 @Mixin(RenderSheep.class)
 public abstract class MixinRenderSheep extends RenderLiving {
 
@@ -24,7 +30,7 @@ public abstract class MixinRenderSheep extends RenderLiving {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/entity/RenderSheep;bindTexture(Lnet/minecraft/util/ResourceLocation;)V"))
-    private void modifyShouldRenderPass(RenderSheep instance, ResourceLocation resourceLocation, EntitySheep entity) {
-        this.bindTexture(MobRandomizer.randomTexture(entity, resourceLocation));
+    private void optiFuture$randomizeWoolTexture(RenderSheep renderer, ResourceLocation texture, EntitySheep entity) {
+        this.bindTexture(MobRandomizer.randomTexture(entity, texture));
     }
 }

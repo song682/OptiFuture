@@ -18,6 +18,7 @@ out
 # gradle
 /build/
 /.gradle/
+/gradle/
 *.gradle
 gradlew
 gradlew.bat

@@ -10,6 +10,15 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+/**
+ * Redirects fluid icon lookups to the connected-textures aware variant when the
+ * connected-textures feature is enabled but custom colors is not, so fluids can
+ * still use per-position icons without the colour tinting path.
+ * <p>
+ * 当连接材质启用而自定义颜色未启用时，将流体图标查找重定向
+ * 到感知连接材质的变体，使流体仍能使用逐位置图标，而不经过
+ * 颜色染色路径。
+ */
 @Mixin(RenderBlocks.class)
 public abstract class MixinRenderBlocksNoCC {
 
@@ -28,7 +37,7 @@ public abstract class MixinRenderBlocksNoCC {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;getBlockIconFromSideAndMetadata(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;",
             ordinal = 0))
-    private IIcon mcpatcherforge$redirectToGetBlockIcon(RenderBlocks instance, Block block, int side, int meta,
+    private IIcon optiFuture$redirectToGetBlockIcon(RenderBlocks instance, Block block, int side, int meta,
         Block specializedBlock, int x, int y, int z) {
         return (this.blockAccess == null) ? this.getBlockIconFromSideAndMetadata(block, side, meta)
             : this.getBlockIcon(block, this.blockAccess, x, y, z, side);
@@ -40,7 +49,7 @@ public abstract class MixinRenderBlocksNoCC {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;getBlockIconFromSideAndMetadata(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;",
             ordinal = 2))
-    private IIcon mcpatcherforge$saveSideAndRedirectToGetBlockIcon(RenderBlocks instance, Block block, int side,
+    private IIcon optiFuture$saveSideAndRedirectToGetBlockIcon(RenderBlocks instance, Block block, int side,
         int meta, Block specializedBlock, int x, int y, int z) {
         return (this.blockAccess == null) ? this.getBlockIconFromSideAndMetadata(block, side, meta)
             : this.getBlockIcon(block, this.blockAccess, x, y, z, side);

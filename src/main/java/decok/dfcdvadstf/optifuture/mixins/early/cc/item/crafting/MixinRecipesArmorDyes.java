@@ -13,87 +13,92 @@ import org.spongepowered.asm.mixin.Overwrite;
 
 import com.prupe.mcpatcher.cc.ColorizeEntity;
 
+/**
+ * Reimplements leather-armor dye blending so that dye colors are pulled from
+ * the customizable fleece color table instead of the vanilla constants.
+ * <p>
+ * 重写皮革护甲的染料混合逻辑，使染料颜色取自可自定义的羊毛
+ * 颜色表，而非原版的固定常量。
+ */
 @Mixin(RecipesArmorDyes.class)
 public abstract class MixinRecipesArmorDyes {
 
     /**
-     * @author Mist475 (adapted from Paul Rupe)
-     * @reason Fleece color redirection is beyond my skill atm
+     * @author OptiFutureOptimized
+     * @reason Redirect leather dye blending through the customizable fleece
+     *         color table; a constant/argument redirect is not viable here
+     *         because dye contributions are accumulated inside the loop.
      */
     @SuppressWarnings("DuplicatedCode")
     @Overwrite
     public ItemStack getCraftingResult(InventoryCrafting inventoryCrafting) {
-        ItemStack itemstack = null;
-        int[] aint = new int[3];
-        int i = 0;
-        int j = 0;
-        ItemArmor itemarmor = null;
-        int k;
-        int l;
-        float f;
-        float f1;
-        int l1;
+        ItemStack dyedArmor = null;
+        int[] channelSum = new int[3];
+        int brightnessSum = 0;
+        int contributions = 0;
+        ItemArmor armorItem = null;
 
-        for (k = 0; k < inventoryCrafting.getSizeInventory(); ++k) {
-            ItemStack itemstack1 = inventoryCrafting.getStackInSlot(k);
+        for (int slot = 0; slot < inventoryCrafting.getSizeInventory(); ++slot) {
+            ItemStack ingredient = inventoryCrafting.getStackInSlot(slot);
+            if (ingredient == null) {
+                continue;
+            }
 
-            if (itemstack1 != null) {
-                if (itemstack1.getItem() instanceof ItemArmor) {
-                    itemarmor = (ItemArmor) itemstack1.getItem();
+            if (ingredient.getItem() instanceof ItemArmor) {
+                armorItem = (ItemArmor) ingredient.getItem();
 
-                    if (itemarmor.getArmorMaterial() != ItemArmor.ArmorMaterial.CLOTH || itemstack != null) {
-                        return null;
-                    }
-
-                    itemstack = itemstack1.copy();
-                    itemstack.stackSize = 1;
-
-                    if (itemarmor.hasColor(itemstack1)) {
-                        l = itemarmor.getColor(itemstack);
-                        f = (float) (l >> 16 & 255) / 255.0F;
-                        f1 = (float) (l >> 8 & 255) / 255.0F;
-                        float f2 = (float) (l & 255) / 255.0F;
-                        i = (int) ((float) i + Math.max(f, Math.max(f1, f2)) * 255.0F);
-                        aint[0] = (int) ((float) aint[0] + f * 255.0F);
-                        aint[1] = (int) ((float) aint[1] + f1 * 255.0F);
-                        aint[2] = (int) ((float) aint[2] + f2 * 255.0F);
-                        ++j;
-                    }
-                } else {
-                    if (itemstack1.getItem() != Items.dye) {
-                        return null;
-                    }
-                    // patch
-                    float[] afloat = ColorizeEntity.getArmorDyeColor(
-                        EntitySheep.fleeceColorTable[BlockColored.func_150032_b(itemstack1.getItemDamage())],
-                        BlockColored.func_150032_b(itemstack1.getItemDamage()));
-                    int j1 = (int) (afloat[0] * 255.0F);
-                    int k1 = (int) (afloat[1] * 255.0F);
-                    l1 = (int) (afloat[2] * 255.0F);
-                    i += Math.max(j1, Math.max(k1, l1));
-                    aint[0] += j1;
-                    aint[1] += k1;
-                    aint[2] += l1;
-                    ++j;
+                if (armorItem.getArmorMaterial() != ItemArmor.ArmorMaterial.CLOTH || dyedArmor != null) {
+                    return null;
                 }
+
+                dyedArmor = ingredient.copy();
+                dyedArmor.stackSize = 1;
+
+                if (armorItem.hasColor(ingredient)) {
+                    int existingColor = armorItem.getColor(dyedArmor);
+                    float red = (float) (existingColor >> 16 & 255) / 255.0F;
+                    float green = (float) (existingColor >> 8 & 255) / 255.0F;
+                    float blue = (float) (existingColor & 255) / 255.0F;
+                    brightnessSum += (int) (Math.max(red, Math.max(green, blue)) * 255.0F);
+                    channelSum[0] += (int) (red * 255.0F);
+                    channelSum[1] += (int) (green * 255.0F);
+                    channelSum[2] += (int) (blue * 255.0F);
+                    ++contributions;
+                }
+            } else {
+                if (ingredient.getItem() != Items.dye) {
+                    return null;
+                }
+                // patch: pull the dye color from the customizable fleece color table
+                int dyeMeta = BlockColored.func_150032_b(ingredient.getItemDamage());
+                float[] dyeColor = ColorizeEntity
+                    .getArmorDyeColor(EntitySheep.fleeceColorTable[dyeMeta], dyeMeta);
+                int red = (int) (dyeColor[0] * 255.0F);
+                int green = (int) (dyeColor[1] * 255.0F);
+                int blue = (int) (dyeColor[2] * 255.0F);
+                brightnessSum += Math.max(red, Math.max(green, blue));
+                channelSum[0] += red;
+                channelSum[1] += green;
+                channelSum[2] += blue;
+                ++contributions;
             }
         }
 
-        if (itemarmor == null) {
+        if (armorItem == null) {
             return null;
-        } else {
-            k = aint[0] / j;
-            int i1 = aint[1] / j;
-            l = aint[2] / j;
-            f = (float) i / (float) j;
-            f1 = (float) Math.max(k, Math.max(i1, l));
-            k = (int) ((float) k * f / f1);
-            i1 = (int) ((float) i1 * f / f1);
-            l = (int) ((float) l * f / f1);
-            l1 = (k << 8) + i1;
-            l1 = (l1 << 8) + l;
-            itemarmor.func_82813_b(itemstack, l1);
-            return itemstack;
         }
+
+        int avgRed = channelSum[0] / contributions;
+        int avgGreen = channelSum[1] / contributions;
+        int avgBlue = channelSum[2] / contributions;
+        float targetBrightness = (float) brightnessSum / (float) contributions;
+        float maxChannel = (float) Math.max(avgRed, Math.max(avgGreen, avgBlue));
+        avgRed = (int) ((float) avgRed * targetBrightness / maxChannel);
+        avgGreen = (int) ((float) avgGreen * targetBrightness / maxChannel);
+        avgBlue = (int) ((float) avgBlue * targetBrightness / maxChannel);
+        int packedColor = (avgRed << 8) + avgGreen;
+        packedColor = (packedColor << 8) + avgBlue;
+        armorItem.func_82813_b(dyedArmor, packedColor);
+        return dyedArmor;
     }
 }

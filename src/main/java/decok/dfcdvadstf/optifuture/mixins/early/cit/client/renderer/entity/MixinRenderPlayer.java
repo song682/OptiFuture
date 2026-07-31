@@ -16,6 +16,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import com.prupe.mcpatcher.cit.CITUtils;
 
+/**
+ * Redirects the player's armor texture resolution through the CIT resolver so
+ * custom armor textures apply in both the base and overlay armor render passes.
+ * <p>
+ * 将玩家的护甲材质解析经由 CIT 解析器重定向，使自定义护甲材质在基础
+ * 与叠加两个护甲渲染阶段均生效。
+ */
 @Mixin(RenderPlayer.class)
 public abstract class MixinRenderPlayer extends RendererLivingEntity {
 
@@ -29,7 +36,7 @@ public abstract class MixinRenderPlayer extends RendererLivingEntity {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/entity/RenderBiped;getArmorResource(Lnet/minecraft/entity/Entity;Lnet/minecraft/item/ItemStack;ILjava/lang/String;)Lnet/minecraft/util/ResourceLocation;",
             remap = false))
-    private ResourceLocation modifyShouldRenderPass(Entity entity, ItemStack stack, int slot, String type,
+    private ResourceLocation optiFuture$resolveArmorTexture(Entity entity, ItemStack stack, int slot, String type,
         AbstractClientPlayer player) {
         return CITUtils
             .getArmorTexture(RenderBiped.getArmorResource(player, stack, slot, type), (EntityLivingBase) entity, stack);
@@ -41,8 +48,8 @@ public abstract class MixinRenderPlayer extends RendererLivingEntity {
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/entity/RenderBiped;getArmorResource(Lnet/minecraft/entity/Entity;Lnet/minecraft/item/ItemStack;ILjava/lang/String;)Lnet/minecraft/util/ResourceLocation;",
             remap = false))
-    private ResourceLocation modifyFunc_82408_c(Entity entity, ItemStack stack, int slot, String type,
-        AbstractClientPlayer player) {
+    private ResourceLocation optiFuture$resolveArmorOverlayTexture(Entity entity, ItemStack stack, int slot,
+        String type, AbstractClientPlayer player) {
         return CITUtils
             .getArmorTexture(RenderBiped.getArmorResource(player, stack, slot, type), (EntityLivingBase) entity, stack);
     }

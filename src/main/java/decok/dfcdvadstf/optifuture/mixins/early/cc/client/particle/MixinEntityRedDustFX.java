@@ -12,6 +12,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.prupe.mcpatcher.cc.ColorizeBlock;
 import com.prupe.mcpatcher.cc.Colorizer;
 
+/**
+ * Overrides the base redstone dust particle color with a pack-defined redstone
+ * tint before the vanilla per-particle brightness jitter is applied.
+ * <p>
+ * 在原版对每个粒子施加亮度抖动之前，用资源包定义的红石色覆盖红石粉尘粒子的基础颜色。
+ */
 @Mixin(EntityReddustFX.class)
 public abstract class MixinEntityRedDustFX extends EntityFX {
 
@@ -20,8 +26,8 @@ public abstract class MixinEntityRedDustFX extends EntityFX {
     }
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;DDDFFFF)V", at = @At("RETURN"))
-    private void modifyConstructor(World world, double x, double y, double z, float p_i1224_8_, float red, float green,
-        float blue, CallbackInfo ci) {
+    private void optiFuture$tintRedDust(World world, double x, double y, double z, float p_i1224_8_, float red,
+        float green, float blue, CallbackInfo ci) {
         // == 1.0f is needed as this runs after the rest of the constructor
         if (red == 0.0F || red == 1.0f) {
             red = 1.0F;

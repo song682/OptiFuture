@@ -12,8 +12,8 @@ import net.minecraft.potion.PotionHelper;
 import com.prupe.mcpatcher.MCLogger;
 import com.prupe.mcpatcher.mal.resource.PropertiesFile;
 
-import mist475.mcpatcherforge.mixins.interfaces.MapColorExpansion;
-import mist475.mcpatcherforge.mixins.interfaces.PotionExpansion;
+import decok.dfcdvadstf.optifuture.interfaces.MapColorExpansion;
+import decok.dfcdvadstf.optifuture.interfaces.PotionExpansion;
 
 public class ColorizeItem {
 

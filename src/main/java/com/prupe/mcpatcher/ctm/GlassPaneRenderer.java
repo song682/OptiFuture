@@ -10,7 +10,7 @@ import net.minecraft.world.IBlockAccess;
 
 import com.prupe.mcpatcher.mal.block.BlockAPI;
 
-import mist475.mcpatcherforge.config.MCPatcherForgeConfig;
+import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 
 public class GlassPaneRenderer {
 

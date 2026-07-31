@@ -10,7 +10,18 @@ import java.util.stream.Collectors;
 import cpw.mods.fml.relauncher.FMLLaunchHandler;
 import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 
-// Adapted from Hodgepodge
+/**
+ * Configuration-gated mixin registry (adapted from Hodgepodge). Each enum
+ * constant describes one feature group: its mixin class list, the side and
+ * phase it runs in, the config flag that gates it and the mods it targets.
+ * {@code MCPatcherForgeCore} consumes the EARLY entries and
+ * {@code MCPatcherForgeLateMixins} the LATE ones at startup.
+ * <p>
+ * 按配置门控的 mixin 注册表（改编自 Hodgepodge）。每个枚举常量描述一个
+ * 功能组：其 mixin 类清单、运行端与阶段、门控它的配置开关以及目标模组。
+ * {@code MCPatcherForgeCore} 在启动时消费 EARLY 条目，
+ * {@code MCPatcherForgeLateMixins} 消费 LATE 条目。
+ */
 public enum Mixins {
 
     BASE_MOD(new Builder("Base mod (can't be disabled, sorry)").setSide(Side.CLIENT)

@@ -24,7 +24,7 @@ import com.prupe.mcpatcher.mal.resource.BlendMethod;
 import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 
-import mist475.mcpatcherforge.config.MCPatcherForgeConfig;
+import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 
 public class TileLoader {
 

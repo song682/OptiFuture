@@ -12,6 +12,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.prupe.mcpatcher.cc.ColorizeBlock;
 import com.prupe.mcpatcher.cc.Colorizer;
 
+/**
+ * Tints water splash particles with the biome water color. When no custom color
+ * applies the vanilla appearance is left untouched (no fallback assignment).
+ * <p>
+ * 用群系水色为水花溅射粒子着色。若无自定义颜色则保持原版外观（不做回退赋值）。
+ */
 @Mixin(EntitySplashFX.class)
 public abstract class MixinEntitySplashFX extends EntityFX {
 
@@ -20,7 +26,7 @@ public abstract class MixinEntitySplashFX extends EntityFX {
     }
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;DDDDDD)V", at = @At("RETURN"))
-    private void modifyConstructor(World world, double x, double y, double z, double motionX, double motionY,
+    private void optiFuture$tintSplash(World world, double x, double y, double z, double motionX, double motionY,
         double motionZ, CallbackInfo ci) {
         if (ColorizeBlock.computeWaterColor(false, (int) this.posX, (int) this.posY, (int) this.posZ)) {
             this.particleRed = Colorizer.setColor[0];
