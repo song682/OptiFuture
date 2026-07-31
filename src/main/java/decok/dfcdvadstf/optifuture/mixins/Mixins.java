@@ -18,6 +18,7 @@ public enum Mixins {
         .setApplyIf(() -> true)
         .addTargetedMod(TargetedMod.VANILLA)
         .addMixinClasses(
+            "base.MixinBlockDirt",
             "base.MixinBlockGrass",
             "base.MixinBlockMycelium",
 

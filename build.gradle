@@ -279,6 +279,9 @@ artifacts {
 
 if (project.include_license.toBoolean()){
     jar {
+        // The LICENSE from src/main/resources is already packaged; keep the first copy.
+        // src/main/resources 中的 LICENSE 已被打包，保留首个副本即可。
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         from file("./LICENSE")
     }
     deobfJar {

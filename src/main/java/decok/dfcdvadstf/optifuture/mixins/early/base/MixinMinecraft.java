@@ -27,6 +27,7 @@ import com.prupe.mcpatcher.cc.Colorizer;
 import com.prupe.mcpatcher.cit.CITUtils;
 import com.prupe.mcpatcher.ctm.CTMUtils;
 import com.prupe.mcpatcher.hd.FontUtils;
+import com.prupe.mcpatcher.mal.block.BetterGrass;
 import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 import com.prupe.mcpatcher.mal.tile.TileLoader;
 import com.prupe.mcpatcher.mob.MobRandomizer;
@@ -61,6 +62,9 @@ public abstract class MixinMinecraft {
     private void modifyStartGame1(CallbackInfo ci) {
         TileLoader.init();
         CTMUtils.reset();
+        // Register the Better Grass texture pack handler before the initial atlas stitch.
+        // 在首次图集拼合之前注册 Better Grass 的材质包处理器。
+        BetterGrass.init();
         MCPatcherForgeConfig config = MCPatcherForgeConfig.instance();
         if (config.customItemTexturesEnabled) {
             CITUtils.init();
