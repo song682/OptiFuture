@@ -18,6 +18,19 @@ import com.prupe.mcpatcher.MCPatcherUtils;
 import com.prupe.mcpatcher.mal.biome.BiomeAPI;
 import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 
+/**
+ * Entry point of the Random Entities feature (the modern successor of Random
+ * Mobs). Every entity texture binding is routed through
+ * {@link #randomTexture(Entity, ResourceLocation)}, which picks a randomized
+ * variant based on the entity's persistent extra info and the rules loaded by
+ * {@link MobRuleList}. Besides living mobs, non-living entities with textures
+ * such as paintings are supported as well.
+ * <p>
+ * Random Entities 特性（Random Mobs 的现代继任者）的入口。每一次实体纹理
+ * 绑定都会经由 {@link #randomTexture(Entity, ResourceLocation)} 路由，根据
+ * 实体的持久化附加信息与 {@link MobRuleList} 加载的规则挑选随机化变体。
+ * 除生物外，画等拥有纹理的非生物实体同样受支持。
+ */
 public class MobRandomizer {
 
     private static final MCLogger logger = MCLogger.getLogger(MCLogger.Category.RANDOM_MOBS);
@@ -42,8 +55,8 @@ public class MobRandomizer {
 
     public static void init() {}
 
-    public static ResourceLocation randomTexture(EntityLivingBase entity, ResourceLocation texture) {
-        if (texture == null || !texture.getResourcePath()
+    public static ResourceLocation randomTexture(Entity entity, ResourceLocation texture) {
+        if (entity == null || texture == null || !texture.getResourcePath()
             .endsWith(".png")) {
             return texture;
         }
@@ -52,7 +65,7 @@ public class MobRandomizer {
         if (newTexture == null) {
             ExtraInfo info = ExtraInfo.getInfo(entity);
             MobRuleList list = MobRuleList.get(texture);
-            newTexture = list.getSkin(info.skin, info.origX, info.origY, info.origZ, info.origBiome);
+            newTexture = list.getSkin(entity, info);
             cache.put(key, newTexture);
             logger.finer("entity %s using %s (cache: %d)", entity, newTexture, cache.size());
             if (cache.size() > 250) {
@@ -67,14 +80,19 @@ public class MobRandomizer {
         return newTexture;
     }
 
-    public static ResourceLocation randomTexture(Entity entity, ResourceLocation texture) {
-        if (entity instanceof EntityLivingBase) {
-            return randomTexture((EntityLivingBase) entity, texture);
-        } else {
-            return texture;
-        }
-    }
-
+    /**
+     * Persistent per-entity randomization state. Originally keyed to living
+     * mobs only, it now covers every entity type so that paintings and other
+     * non-living entities can be randomized too. The info is shared between
+     * the server and the client entity instances via the entity id, which is
+     * what lets server-side data (NBT, saved spawn position) reach the client
+     * renderer in single player.
+     * <p>
+     * 每个实体的持久化随机状态。最初仅针对生物，现在覆盖所有实体类型，
+     * 使画等非生物实体也可被随机化。该信息通过实体 id 在服务端与客户端
+     * 实体实例之间共享，这正是单人游戏中服务端数据（NBT、保存的生成
+     * 位置）能够到达客户端渲染器的原因。
+     */
     public static final class ExtraInfo {
 
         private static final String SKIN_TAG = "randomMobsSkin";
@@ -87,28 +105,50 @@ public class MobRandomizer {
         private static final long MASK = (1L << 48) - 1;
 
         private static final Map<Integer, ExtraInfo> allInfo = new HashMap<>();
-        private static final Map<WeakReference<EntityLivingBase>, ExtraInfo> allRefs = new HashMap<>();
-        private static final ReferenceQueue<EntityLivingBase> refQueue = new ReferenceQueue<>();
+        private static final Map<WeakReference<Entity>, ExtraInfo> allRefs = new HashMap<>();
+        private static final ReferenceQueue<Entity> refQueue = new ReferenceQueue<>();
 
         private final int entityId;
-        private final HashSet<WeakReference<EntityLivingBase>> references;
+        private final HashSet<WeakReference<Entity>> references;
         private final long skin;
         private final int origX;
         private final int origY;
         private final int origZ;
         private Integer origBiome;
+        // Captured entity NBT for the nbt.<n> rule conditions. Only populated
+        // in single player, since dedicated servers never send entity NBT to
+        // the client.
+        // 为 nbt.<n> 规则条件捕获的实体 NBT。仅在单人游戏中填充，因为
+        // 专用服务器从不向客户端发送实体 NBT。
+        private NBTTagCompound nbt;
 
-        ExtraInfo(EntityLivingBase entity) {
+        ExtraInfo(Entity entity) {
             this(entity, getSkinId(entity.getEntityId()), (int) entity.posX, (int) entity.posY, (int) entity.posZ);
         }
 
-        ExtraInfo(EntityLivingBase entity, long skin, int origX, int origY, int origZ) {
+        ExtraInfo(Entity entity, long skin, int origX, int origY, int origZ) {
             entityId = entity.getEntityId();
             references = new HashSet<>();
             this.skin = skin;
             this.origX = origX;
             this.origY = origY;
             this.origZ = origZ;
+        }
+
+        long getSkin() {
+            return skin;
+        }
+
+        int getOrigY() {
+            return origY;
+        }
+
+        Integer getBiome() {
+            return origBiome;
+        }
+
+        NBTTagCompound getNbt() {
+            return nbt;
         }
 
         private void setBiome() {
@@ -132,7 +172,7 @@ public class MobRandomizer {
 
         private static void clearUnusedReferences() {
             synchronized (allInfo) {
-                Reference<? extends EntityLivingBase> ref;
+                Reference<? extends Entity> ref;
                 while ((ref = refQueue.poll()) != null) {
                     ExtraInfo info = allRefs.get(ref);
                     if (info != null) {
@@ -147,7 +187,7 @@ public class MobRandomizer {
             }
         }
 
-        static ExtraInfo getInfo(EntityLivingBase entity) {
+        static ExtraInfo getInfo(Entity entity) {
             ExtraInfo info;
             synchronized (allInfo) {
                 clearUnusedReferences();
@@ -157,14 +197,14 @@ public class MobRandomizer {
                     putInfo(entity, info);
                 }
                 boolean found = false;
-                for (WeakReference<EntityLivingBase> ref : info.references) {
+                for (WeakReference<Entity> ref : info.references) {
                     if (ref.get() == entity) {
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    WeakReference<EntityLivingBase> reference = new WeakReference<>(entity, refQueue);
+                    WeakReference<Entity> reference = new WeakReference<>(entity, refQueue);
                     info.references.add(reference);
                     allRefs.put(reference, info);
                     logger.finest(
@@ -178,7 +218,7 @@ public class MobRandomizer {
             return info;
         }
 
-        static void putInfo(EntityLivingBase entity, ExtraInfo info) {
+        static void putInfo(Entity entity, ExtraInfo info) {
             synchronized (allInfo) {
                 allInfo.put(entity.getEntityId(), info);
             }
@@ -190,7 +230,7 @@ public class MobRandomizer {
             }
         }
 
-        private static long getSkinId(int entityId) {
+        static long getSkinId(int entityId) {
             long n = entityId;
             n = n ^ (n << 16) ^ (n << 32) ^ (n << 48);
             n = MULTIPLIER * n + ADDEND;
@@ -200,12 +240,24 @@ public class MobRandomizer {
         }
 
         public static void readFromNBT(EntityLivingBase entity, NBTTagCompound nbt) {
-            long skin = nbt.getLong(SKIN_TAG);
-            if (skin != 0L) {
-                int x = nbt.getInteger(ORIG_X_TAG);
-                int y = nbt.getInteger(ORIG_Y_TAG);
-                int z = nbt.getInteger(ORIG_Z_TAG);
-                putInfo(entity, new ExtraInfo(entity, skin, x, y, z));
+            synchronized (allInfo) {
+                ExtraInfo info;
+                long skin = nbt.getLong(SKIN_TAG);
+                if (skin != 0L) {
+                    int x = nbt.getInteger(ORIG_X_TAG);
+                    int y = nbt.getInteger(ORIG_Y_TAG);
+                    int z = nbt.getInteger(ORIG_Z_TAG);
+                    info = new ExtraInfo(entity, skin, x, y, z);
+                    putInfo(entity, info);
+                } else {
+                    info = allInfo.get(entity.getEntityId());
+                }
+                // Keep the full entity NBT around so nbt.<n> rule conditions
+                // can be matched on the client side.
+                // 保留完整的实体 NBT，使 nbt.<n> 规则条件能在客户端被匹配。
+                if (info != null) {
+                    info.nbt = nbt;
+                }
             }
         }
 
