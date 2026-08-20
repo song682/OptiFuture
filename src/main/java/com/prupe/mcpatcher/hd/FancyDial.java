@@ -120,7 +120,9 @@ public class FancyDial {
             logger.warning("ignoring custom animation for %s not compass or clock", name);
             return;
         }
-        ResourceLocation resource = TexturePackAPI.newMCPatcherResourceLocation("dial/" + name + ".properties");
+        // Both the mcpatcher and the optifine directory are accepted.
+        // 同时接受 mcpatcher 与 optifine 两种目录。
+        ResourceLocation resource = TexturePackAPI.resolveDualResource("dial/" + name + ".properties");
         if (TexturePackAPI.hasResource(resource)) {
             logger.fine("found custom %s (%s)", name, resource);
             setupInfo.put(icon, resource);

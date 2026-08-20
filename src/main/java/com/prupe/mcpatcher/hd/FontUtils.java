@@ -65,7 +65,9 @@ public class FontUtils {
             String namespace = defaultFont.getResourceDomain();
             String name = defaultFont.getResourcePath()
                 .replaceAll(".*/", "");
-            expansion.setHDFont(new ResourceLocation(namespace, TexturePackAPI.MCPATCHER_SUBDIR + "font/" + name));
+            // Both the mcpatcher and the optifine directory are accepted.
+            // 同时接受 mcpatcher 与 optifine 两种目录。
+            expansion.setHDFont(TexturePackAPI.resolveDualResource(namespace, "font/" + name));
         }
         ResourceLocation hdFont = expansion.getHDFont();
         ResourceLocation newFont;
@@ -205,10 +207,20 @@ public class FontUtils {
             ResourceLocation newResource = new ResourceLocation(
                 resource.getResourceDomain(),
                 resource.getResourcePath()
-                    .replaceFirst("^textures/", "mcpatcher/"));
+                    .replaceFirst("^textures/", TexturePackAPI.MCPATCHER_SUBDIR));
             if (!newResource.equals(resource) && TexturePackAPI.hasResource(newResource)) {
                 logger.fine("using %s instead of %s", newResource, resource);
                 return newResource;
+            }
+            // Fall back to the optifine directory when the mcpatcher one has no override.
+            // mcpatcher 目录下没有覆盖时回退到 optifine 目录。
+            ResourceLocation optResource = new ResourceLocation(
+                resource.getResourceDomain(),
+                resource.getResourcePath()
+                    .replaceFirst("^textures/", TexturePackAPI.OPTIFINE_SUBDIR));
+            if (!optResource.equals(resource) && TexturePackAPI.hasResource(optResource)) {
+                logger.fine("using %s instead of %s", optResource, resource);
+                return optResource;
             }
         }
         return resource;

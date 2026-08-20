@@ -65,7 +65,9 @@ public class LineRenderer {
     }
 
     private LineRenderer(String name, double width, double a, double b, int segments) {
-        texture = TexturePackAPI.newMCPatcherResourceLocation("line/" + name + ".png");
+        // Both the mcpatcher and the optifine directory are accepted.
+        // 同时接受 mcpatcher 与 optifine 两种目录。
+        texture = TexturePackAPI.resolveDualResource("line/" + name + ".png");
         active = TexturePackAPI.hasResource(texture);
         PropertiesFile properties = PropertiesFile
             .getNonNull(logger, TexturePackAPI.transformResourceLocation(texture, ".png", ".properties"));

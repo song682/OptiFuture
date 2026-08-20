@@ -43,6 +43,8 @@ public class TexturePackAPI {
     public static final String DEFAULT_NAMESPACE = "minecraft";
 
     public static final String MCPATCHER_SUBDIR = "mcpatcher/";
+    /** OptiFine directory layout, searched alongside MCPATCHER_SUBDIR. / 与 MCPATCHER_SUBDIR 并列检索的 OptiFine 目录布局。 */
+    public static final String OPTIFINE_SUBDIR = "optifine/";
     public static final ResourceLocation ITEMS_PNG = new ResourceLocation("textures/atlas/items.png");
 
     private static final String ASSETS = "assets/";
@@ -229,9 +231,13 @@ public class TexturePackAPI {
         }
         ResourceLocation resource;
         if (path.startsWith("~/")) {
-            // Relative to namespace mcpatcher dir:
-            // ~/path -> assets/(namespace of base file)/mcpatcher/path
-            resource = new ResourceLocation(baseResource.getResourceDomain(), MCPATCHER_SUBDIR + path.substring(2));
+            // Relative to the namespace mcpatcher/optifine dir the base file itself lives in:
+            // ~/path -> assets/(namespace of base file)/{mcpatcher|optifine}/path
+            // 相对于 base 文件自身所在的命名空间 mcpatcher/optifine 目录：
+            // ~/path -> assets/(base 文件的命名空间)/{mcpatcher|optifine}/path
+            String subdir = baseResource.getResourcePath()
+                .startsWith(OPTIFINE_SUBDIR) ? OPTIFINE_SUBDIR : MCPATCHER_SUBDIR;
+            resource = new ResourceLocation(baseResource.getResourceDomain(), subdir + path.substring(2));
         } else if (path.startsWith("./")) {
             // Relative to properties file:
             // ./path -> (dir of base file)/path
@@ -261,6 +267,48 @@ public class TexturePackAPI {
 
     public static ResourceLocation newMCPatcherResourceLocation(String path) {
         return new ResourceLocation(MCPATCHER_SUBDIR + path.replaceFirst("^/+", ""));
+    }
+
+    public static ResourceLocation newOptiFineResourceLocation(String path) {
+        return new ResourceLocation(OPTIFINE_SUBDIR + path.replaceFirst("^/+", ""));
+    }
+
+    /**
+     * Existence check that opens and immediately closes the stream, without decoding
+     * the file like {@link #hasResource(ResourceLocation)} does.
+     * 通过打开并立即关闭流来判断资源是否存在，不像 {@link #hasResource(ResourceLocation)} 那样解码文件。
+     */
+    public static boolean resourceExists(ResourceLocation resource) {
+        InputStream is = getInputStream(resource);
+        MCPatcherUtils.close(is);
+        return is != null;
+    }
+
+    /**
+     * Resolves a path relative to the mcpatcher/ or optifine/ directory of a namespace:
+     * the mcpatcher location wins, the optifine location is the fallback, and when neither
+     * exists the mcpatcher location is returned so missing-file behavior stays unchanged.
+     * Must be called once the resource manager is available (i.e. not from static initializers).
+     * 在命名空间的 mcpatcher/ 或 optifine/ 目录下解析相对路径：mcpatcher 位置优先，
+     * optifine 位置兜底；两者都不存在时返回 mcpatcher 位置，使文件缺失时的行为保持不变。
+     * 必须在资源管理器可用后调用（即不能在静态初始化阶段调用）。
+     */
+    public static ResourceLocation resolveDualResource(String namespace, String path) {
+        path = path.replaceFirst("^/+", "");
+        ResourceLocation resource = new ResourceLocation(namespace, MCPATCHER_SUBDIR + path);
+        if (resourceExists(resource)) {
+            return resource;
+        }
+        ResourceLocation optifine = new ResourceLocation(namespace, OPTIFINE_SUBDIR + path);
+        return resourceExists(optifine) ? optifine : resource;
+    }
+
+    /**
+     * {@link #resolveDualResource(String, String)} on the default namespace.
+     * 在默认命名空间上执行 {@link #resolveDualResource(String, String)}。
+     */
+    public static ResourceLocation resolveDualResource(String path) {
+        return resolveDualResource(DEFAULT_NAMESPACE, path);
     }
 
     public static int getTextureIfLoaded(ResourceLocation resource) {

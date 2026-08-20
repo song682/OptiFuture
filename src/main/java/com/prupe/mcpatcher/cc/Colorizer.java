@@ -17,7 +17,9 @@ public class Colorizer {
 
     private static final MCLogger logger = MCLogger.getLogger(MCLogger.Category.CUSTOM_COLORS);
 
-    static final ResourceLocation COLOR_PROPERTIES = TexturePackAPI.newMCPatcherResourceLocation("color.properties");
+    // Resolved at reload time, accepts both the mcpatcher and the optifine directory.
+    // 重载时解析，同时接受 mcpatcher 与 optifine 两种目录。
+    static ResourceLocation COLOR_PROPERTIES = TexturePackAPI.newMCPatcherResourceLocation("color.properties");
     private static PropertiesFile properties;
 
     static final boolean usePotionColors = MCPatcherForgeConfig.instance().ccPotion;
@@ -102,6 +104,7 @@ public class Colorizer {
     }
 
     private static void reloadColorProperties() {
+        COLOR_PROPERTIES = TexturePackAPI.resolveDualResource("color.properties");
         properties = PropertiesFile.getNonNull(logger, COLOR_PROPERTIES);
         logger.finer("reloading %s", properties);
     }

@@ -70,11 +70,16 @@ public class CustomAnimation implements Comparable<CustomAnimation> {
             @Override
             public void afterChange() {
                 if (enable) {
-                    for (ResourceLocation resource : ResourceList.getInstance()
-                        .listResources(TexturePackAPI.MCPATCHER_SUBDIR + "anim", ".properties", false)) {
-                        PropertiesFile properties = PropertiesFile.get(logger, resource);
-                        if (properties != null) {
-                            pending.add(properties);
+                    // Scan the anim directory of both the mcpatcher and the optifine layout.
+                    // 同时扫描 mcpatcher 与 optifine 两种布局下的 anim 目录。
+                    for (String animDir : new String[] { TexturePackAPI.MCPATCHER_SUBDIR + "anim",
+                        TexturePackAPI.OPTIFINE_SUBDIR + "anim" }) {
+                        for (ResourceLocation resource : ResourceList.getInstance()
+                            .listResources(animDir, ".properties", false)) {
+                            PropertiesFile properties = PropertiesFile.get(logger, resource);
+                            if (properties != null) {
+                                pending.add(properties);
+                            }
                         }
                     }
                 }

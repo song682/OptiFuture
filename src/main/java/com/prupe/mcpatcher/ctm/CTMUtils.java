@@ -82,9 +82,14 @@ public class CTMUtils {
                 RenderPassAPI.instance.refreshBlendingOptions();
 
                 if (enableStandard || enableNonStandard) {
-                    for (ResourceLocation resource : ResourceList.getInstance()
-                        .listResources(TexturePackAPI.MCPATCHER_SUBDIR + "ctm", ".properties", true)) {
-                        registerOverride(TileOverride.create(resource, tileLoader));
+                    // Scan the ctm directory of both the mcpatcher and the optifine layout.
+                    // 同时扫描 mcpatcher 与 optifine 两种布局下的 ctm 目录。
+                    for (String ctmDir : new String[] { TexturePackAPI.MCPATCHER_SUBDIR + "ctm",
+                        TexturePackAPI.OPTIFINE_SUBDIR + "ctm" }) {
+                        for (ResourceLocation resource : ResourceList.getInstance()
+                            .listResources(ctmDir, ".properties", true)) {
+                            registerOverride(TileOverride.create(resource, tileLoader));
+                        }
                     }
                 }
                 for (ResourceLocation resource : BlendMethod.getAllBlankResources()) {

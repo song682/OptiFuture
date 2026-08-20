@@ -35,9 +35,15 @@ public class CITUtils {
     private static final MCLogger logger = MCLogger.getLogger(MCLogger.Category.CUSTOM_ITEM_TEXTURES, "CIT");
 
     static final String CIT_PROPERTIES = "cit.properties";
+    // Candidates in priority order: both the mcpatcher and the optifine directory are accepted,
+    // top level first, then the cit/ subdirectory.
+    // 按优先级排列的候选位置：同时接受 mcpatcher 与 optifine 目录，先顶层，后 cit/ 子目录。
     private static final ResourceLocation CIT_PROPERTIES1 = TexturePackAPI.newMCPatcherResourceLocation(CIT_PROPERTIES);
     private static final ResourceLocation CIT_PROPERTIES2 = TexturePackAPI
         .newMCPatcherResourceLocation("cit/" + CIT_PROPERTIES);
+    private static final ResourceLocation CIT_PROPERTIES3 = TexturePackAPI.newOptiFineResourceLocation(CIT_PROPERTIES);
+    private static final ResourceLocation CIT_PROPERTIES4 = TexturePackAPI
+        .newOptiFineResourceLocation("cit/" + CIT_PROPERTIES);
     static final ResourceLocation FIXED_ARMOR_RESOURCE = new ResourceLocation("textures/models/armor/iron_layer_1.png");
 
     static final int MAX_ENCHANTMENTS = 256;
@@ -94,15 +100,26 @@ public class CITUtils {
 
                 PropertiesFile properties = PropertiesFile.get(logger, CIT_PROPERTIES1);
                 if (properties == null) {
-                    properties = PropertiesFile.getNonNull(logger, CIT_PROPERTIES2);
+                    properties = PropertiesFile.get(logger, CIT_PROPERTIES2);
+                }
+                if (properties == null) {
+                    properties = PropertiesFile.get(logger, CIT_PROPERTIES3);
+                }
+                if (properties == null) {
+                    properties = PropertiesFile.getNonNull(logger, CIT_PROPERTIES4);
                 }
                 useGlint = properties.getBoolean("useGlint", true);
                 EnchantmentList.setProperties(properties);
 
                 if (enableItems || enableEnchantments || enableArmor) {
-                    for (ResourceLocation resource : ResourceList.getInstance()
-                        .listResources(TexturePackAPI.MCPATCHER_SUBDIR + "cit", ".properties", true)) {
-                        registerOverride(OverrideBase.create(resource));
+                    // Scan the cit directory of both the mcpatcher and the optifine layout.
+                    // 同时扫描 mcpatcher 与 optifine 两种布局下的 cit 目录。
+                    for (String citDir : new String[] { TexturePackAPI.MCPATCHER_SUBDIR + "cit",
+                        TexturePackAPI.OPTIFINE_SUBDIR + "cit" }) {
+                        for (ResourceLocation resource : ResourceList.getInstance()
+                            .listResources(citDir, ".properties", true)) {
+                            registerOverride(OverrideBase.create(resource));
+                        }
                     }
                     if (enableItems) {
                         PotionReplacer replacer = new PotionReplacer();

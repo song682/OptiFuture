@@ -30,9 +30,13 @@ class MobRuleList {
 
     private MobRuleList(ResourceLocation baseSkin) {
         this.baseSkin = baseSkin;
+        // Map the vanilla skin into the custom mob dir; accept both mcpatcher/ and optifine/ layouts.
+        // 将原版皮肤映射到自定义生物目录，同时兼容 mcpatcher/ 与 optifine/ 两种目录布局。
         String newPath = baseSkin.getResourcePath()
-            .replaceFirst("^textures/entity/", TexturePackAPI.MCPATCHER_SUBDIR + "mob/");
-        ResourceLocation newSkin = new ResourceLocation(baseSkin.getResourceDomain(), newPath);
+            .replaceFirst("^textures/entity/", "");
+        ResourceLocation newSkin = TexturePackAPI.resolveDualResource(
+            baseSkin.getResourceDomain(),
+            "mob/" + newPath);
         allSkins = new ArrayList<>();
         allSkins.add(baseSkin);
         for (int i = 2;; i++) {

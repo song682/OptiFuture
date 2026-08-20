@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
@@ -28,12 +27,12 @@ public class ColorizeWorld {
 
     private static final int fogBlendRadius = MCPatcherForgeConfig.instance().fogBlendRadius;
 
-    private static final ResourceLocation UNDERWATERCOLOR = TexturePackAPI
-        .newMCPatcherResourceLocation("colormap/underwater.png");
-    private static final ResourceLocation UNDERLAVACOLOR = TexturePackAPI
-        .newMCPatcherResourceLocation("colormap/underlava.png");
-    private static final ResourceLocation FOGCOLOR0 = TexturePackAPI.newMCPatcherResourceLocation("colormap/fog0.png");
-    private static final ResourceLocation SKYCOLOR0 = TexturePackAPI.newMCPatcherResourceLocation("colormap/sky0.png");
+    // Colormap paths, resolved at reload time against both the mcpatcher and the optifine directory.
+    // 调色板路径，重载时同时在 mcpatcher 与 optifine 目录下解析。
+    private static final String UNDERWATERCOLOR = "colormap/underwater.png";
+    private static final String UNDERLAVACOLOR = "colormap/underlava.png";
+    private static final String FOGCOLOR0 = "colormap/fog0.png";
+    private static final String SKYCOLOR0 = "colormap/sky0.png";
 
     private static final String TEXT_KEY = "text.";
     private static final String TEXT_CODE_KEY = TEXT_KEY + "code.";
@@ -86,10 +85,14 @@ public class ColorizeWorld {
     }
 
     static void reloadFogColors(PropertiesFile properties) {
-        underwaterColor = wrapFogMap(ColorMap.loadFixedColorMap(Colorizer.useFogColors, UNDERWATERCOLOR));
-        underlavaColor = wrapFogMap(ColorMap.loadFixedColorMap(Colorizer.useFogColors, UNDERLAVACOLOR));
-        fogColorMap = wrapFogMap(ColorMap.loadFixedColorMap(Colorizer.useFogColors, FOGCOLOR0));
-        skyColorMap = wrapFogMap(ColorMap.loadFixedColorMap(Colorizer.useFogColors, SKYCOLOR0));
+        underwaterColor = wrapFogMap(
+            ColorMap.loadFixedColorMap(Colorizer.useFogColors, TexturePackAPI.resolveDualResource(UNDERWATERCOLOR)));
+        underlavaColor = wrapFogMap(
+            ColorMap.loadFixedColorMap(Colorizer.useFogColors, TexturePackAPI.resolveDualResource(UNDERLAVACOLOR)));
+        fogColorMap = wrapFogMap(
+            ColorMap.loadFixedColorMap(Colorizer.useFogColors, TexturePackAPI.resolveDualResource(FOGCOLOR0)));
+        skyColorMap = wrapFogMap(
+            ColorMap.loadFixedColorMap(Colorizer.useFogColors, TexturePackAPI.resolveDualResource(SKYCOLOR0)));
 
         loadFloatColor("fog.nether", netherFogColor);
         loadFloatColor("fog.end", endFogColor);

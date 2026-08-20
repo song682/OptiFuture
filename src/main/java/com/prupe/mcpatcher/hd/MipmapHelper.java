@@ -25,8 +25,8 @@ public class MipmapHelper {
 
     private static final MCLogger logger = MCLogger.getLogger(MCLogger.Category.EXTENDED_HD);
 
-    private static final ResourceLocation MIPMAP_PROPERTIES = TexturePackAPI
-        .newMCPatcherResourceLocation("mipmap.properties");
+    /** Relative path of mipmap.properties, resolved against both dual directories. / mipmap.properties 的相对路径，在双目录下解析。 */
+    private static final String MIPMAP_PROPERTIES = "mipmap.properties";
 
     static final int TEX_FORMAT = GL12.GL_BGRA;
     static final int TEX_DATA_TYPE = GL12.GL_UNSIGNED_INT_8_8_8_8_REV;
@@ -125,7 +125,9 @@ public class MipmapHelper {
         mipmapType.clear();
         mipmapType.put("terrain", true);
         mipmapType.put("items", false);
-        PropertiesFile properties = PropertiesFile.get(logger, MIPMAP_PROPERTIES);
+        // Both the mcpatcher and the optifine directory are accepted.
+        // 同时接受 mcpatcher 与 optifine 两种目录。
+        PropertiesFile properties = PropertiesFile.get(logger, TexturePackAPI.resolveDualResource(MIPMAP_PROPERTIES));
         if (properties != null) {
             for (Map.Entry<String, String> entry : properties.entrySet()) {
                 String key = entry.getKey()
@@ -152,12 +154,12 @@ public class MipmapHelper {
             && !texture.startsWith("textures/gui/")
             && !texture.startsWith("textures/map/")
             && !texture.startsWith("textures/misc/")
-            && !texture.startsWith(TexturePackAPI.MCPATCHER_SUBDIR + "colormap/")
-            && !texture.startsWith(TexturePackAPI.MCPATCHER_SUBDIR + "cit/")
-            && !texture.startsWith(TexturePackAPI.MCPATCHER_SUBDIR + "dial/")
-            && !texture.startsWith(TexturePackAPI.MCPATCHER_SUBDIR + "font/")
-            && !texture.startsWith(TexturePackAPI.MCPATCHER_SUBDIR + "lightmap/")
-            && !texture.startsWith(TexturePackAPI.MCPATCHER_SUBDIR + "sky/")
+            && !inCustomTextureDir(texture, "colormap/")
+            && !inCustomTextureDir(texture, "cit/")
+            && !inCustomTextureDir(texture, "dial/")
+            && !inCustomTextureDir(texture, "font/")
+            && !inCustomTextureDir(texture, "lightmap/")
+            && !inCustomTextureDir(texture, "sky/")
             &&
             // 1.5 stuff
             !texture.startsWith("%")
@@ -169,6 +171,16 @@ public class MipmapHelper {
             && !texture.startsWith("/misc/")
             && !texture.startsWith("/terrain/")
             && !texture.startsWith("/title/");
+    }
+
+    /**
+     * Whether a texture path points into the given directory under either the mcpatcher
+     * or the optifine layout.
+     * 判断贴图路径是否位于 mcpatcher 或 optifine 布局下的指定目录。
+     */
+    private static boolean inCustomTextureDir(String texture, String dir) {
+        return texture.startsWith(TexturePackAPI.MCPATCHER_SUBDIR + dir)
+            || texture.startsWith(TexturePackAPI.OPTIFINE_SUBDIR + dir);
     }
 
     static int getMipmapLevelsForCurrentTexture() {

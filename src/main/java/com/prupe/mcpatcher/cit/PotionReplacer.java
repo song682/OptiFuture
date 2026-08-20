@@ -103,7 +103,9 @@ class PotionReplacer {
 
     private static ResourceLocation getPotionPath(String name, boolean splash) {
         String path = "cit/potion/" + (splash ? "splash/" : "normal/") + name + ".png";
-        return TexturePackAPI.newMCPatcherResourceLocation(path);
+        // Both the mcpatcher and the optifine directory are accepted.
+        // 同时接受 mcpatcher 与 optifine 两种目录。
+        return TexturePackAPI.resolveDualResource(path);
     }
 
     private static Properties newProperties(ResourceLocation path, String itemID, String layer) {

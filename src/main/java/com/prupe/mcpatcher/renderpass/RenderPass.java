@@ -27,8 +27,10 @@ public class RenderPass {
 
     private static final MCLogger logger = MCLogger.getLogger(MCLogger.Category.BETTER_GLASS);
 
-    private static final ResourceLocation RENDERPASS_PROPERTIES = TexturePackAPI
-        .newMCPatcherResourceLocation("renderpass.properties");
+    // Resolved at refresh time against both the mcpatcher and the optifine directory.
+    // 在刷新时解析，同时兼容 mcpatcher 与 optifine 两种目录。
+    private static final String RENDERPASS_PROPERTIES_PATH = "renderpass.properties";
+    private static ResourceLocation renderpassProperties;
 
     private static final Map<Block, Integer> baseRenderPass = new IdentityHashMap<>();
     private static final Map<Block, Integer> extraRenderPass = new IdentityHashMap<>();
@@ -112,7 +114,8 @@ public class RenderPass {
 
             @Override
             public void refreshBlendingOptions() {
-                PropertiesFile properties = PropertiesFile.get(logger, RENDERPASS_PROPERTIES);
+                renderpassProperties = TexturePackAPI.resolveDualResource(RENDERPASS_PROPERTIES_PATH);
+                PropertiesFile properties = PropertiesFile.get(logger, renderpassProperties);
                 if (properties != null) {
                     remapProperties(properties);
                     String method = properties.getString("blend.overlay", "alpha")
@@ -120,7 +123,7 @@ public class RenderPass {
                         .toLowerCase();
                     blendMethod = BlendMethod.parse(method);
                     if (blendMethod == null) {
-                        logger.error("%s: unknown blend method '%s'", RENDERPASS_PROPERTIES, method);
+                        logger.error("%s: unknown blend method '%s'", renderpassProperties, method);
                         blendMethod = BlendMethod.ALPHA;
                     }
                     blendBlankResource = blendMethod.getBlankResource();

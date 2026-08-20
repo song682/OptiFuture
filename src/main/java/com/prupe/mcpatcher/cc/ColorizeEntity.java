@@ -3,8 +3,6 @@ package com.prupe.mcpatcher.cc;
 import java.util.Arrays;
 import java.util.Random;
 
-import net.minecraft.util.ResourceLocation;
-
 import com.prupe.mcpatcher.MCPatcherUtils;
 import com.prupe.mcpatcher.mal.biome.BiomeAPI;
 import com.prupe.mcpatcher.mal.biome.ColorUtils;
@@ -13,12 +11,11 @@ import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 
 public class ColorizeEntity {
 
-    private static final ResourceLocation LAVA_DROP_COLORS = TexturePackAPI
-        .newMCPatcherResourceLocation("colormap/lavadrop.png");
-    private static final ResourceLocation MYCELIUM_COLORS = TexturePackAPI
-        .newMCPatcherResourceLocation("colormap/myceliumparticle.png");
-    private static final ResourceLocation XPORB_COLORS = TexturePackAPI
-        .newMCPatcherResourceLocation("colormap/xporb.png");
+    // Colormap paths, resolved at reload time against both the mcpatcher and the optifine directory.
+    // 调色板路径，重载时同时在 mcpatcher 与 optifine 目录下解析。
+    private static final String LAVA_DROP_COLORS = "colormap/lavadrop.png";
+    private static final String MYCELIUM_COLORS = "colormap/myceliumparticle.png";
+    private static final String XPORB_COLORS = "colormap/xporb.png";
 
     static float[] waterBaseColor; // particle.water
     private static float[] lavaDropColors; // misc/lavadropcolor.png
@@ -68,14 +65,14 @@ public class ColorizeEntity {
         Colorizer.loadFloatColor("drop.water", waterBaseColor);
         Colorizer.loadFloatColor("particle.water", waterBaseColor);
         Colorizer.loadFloatColor("particle.portal", portalColor);
-        int[] rgb = MCPatcherUtils.getImageRGB(TexturePackAPI.getImage(LAVA_DROP_COLORS));
+        int[] rgb = MCPatcherUtils.getImageRGB(TexturePackAPI.getImage(TexturePackAPI.resolveDualResource(LAVA_DROP_COLORS)));
         if (rgb != null) {
             lavaDropColors = new float[3 * rgb.length];
             for (int i = 0; i < rgb.length; i++) {
                 ColorUtils.intToFloat3(rgb[i], lavaDropColors, 3 * i);
             }
         }
-        myceliumColors = MCPatcherUtils.getImageRGB(TexturePackAPI.getImage(MYCELIUM_COLORS));
+        myceliumColors = MCPatcherUtils.getImageRGB(TexturePackAPI.getImage(TexturePackAPI.resolveDualResource(MYCELIUM_COLORS)));
     }
 
     static void reloadDyeColors(PropertiesFile properties) {
@@ -92,7 +89,7 @@ public class ColorizeEntity {
     }
 
     static void reloadXPOrbColors(PropertiesFile properties) {
-        xpOrbColors = MCPatcherUtils.getImageRGB(TexturePackAPI.getImage(XPORB_COLORS));
+        xpOrbColors = MCPatcherUtils.getImageRGB(TexturePackAPI.getImage(TexturePackAPI.resolveDualResource(XPORB_COLORS)));
     }
 
     public static int colorizeXPOrb(int origColor, float timer) {

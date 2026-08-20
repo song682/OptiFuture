@@ -125,7 +125,9 @@ public class SkyRenderer {
         private void loadSkies() {
             for (int i = -1;; i++) {
                 String path = "sky/world" + worldType + "/sky" + (i < 0 ? "" : String.valueOf(i)) + ".properties";
-                ResourceLocation resource = TexturePackAPI.newMCPatcherResourceLocation(path);
+                // Search both the mcpatcher and the optifine directory for each sky layer.
+                // 每个天空层在 mcpatcher 与 optifine 两个目录中查找。
+                ResourceLocation resource = TexturePackAPI.resolveDualResource(path);
                 Layer layer = Layer.create(resource);
                 if (layer == null) {
                     if (i > 0) {
@@ -142,7 +144,7 @@ public class SkyRenderer {
         private void loadCelestialObject(String objName) {
             ResourceLocation textureName = new ResourceLocation("textures" + "/environment/" + objName + ".png");
             String path = "sky/world" + worldType + "/" + objName + ".properties";
-            ResourceLocation resource = TexturePackAPI.newMCPatcherResourceLocation(path);
+            ResourceLocation resource = TexturePackAPI.resolveDualResource(path);
             PropertiesFile properties = PropertiesFile.get(logger, resource);
             if (properties != null) {
                 properties.setProperty("fade", "false");

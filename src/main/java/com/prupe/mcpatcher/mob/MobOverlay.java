@@ -8,10 +8,10 @@ import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 
 public class MobOverlay {
 
-    private static final ResourceLocation MOOSHROOM_OVERLAY = TexturePackAPI
-        .newMCPatcherResourceLocation("mob/cow/mooshroom_overlay.png");
-    private static final ResourceLocation SNOWMAN_OVERLAY = TexturePackAPI
-        .newMCPatcherResourceLocation("mob/snowman_overlay.png");
+    // Resolved at reset time, both the mcpatcher and the optifine directory are accepted.
+    // 在 reset 时解析，同时接受 mcpatcher 与 optifine 两种目录。
+    private static ResourceLocation MOOSHROOM_OVERLAY;
+    private static ResourceLocation SNOWMAN_OVERLAY;
 
     private static final double MOO_X0 = -0.45;
     private static final double MOO_X1 = 0.45;
@@ -33,6 +33,8 @@ public class MobOverlay {
     private static boolean haveSnowman;
 
     static void reset() {
+        MOOSHROOM_OVERLAY = TexturePackAPI.resolveDualResource("mob/cow/mooshroom_overlay.png");
+        SNOWMAN_OVERLAY = TexturePackAPI.resolveDualResource("mob/snowman_overlay.png");
         haveMooshroom = TexturePackAPI.hasResource(MOOSHROOM_OVERLAY);
         haveSnowman = TexturePackAPI.hasResource(SNOWMAN_OVERLAY);
     }

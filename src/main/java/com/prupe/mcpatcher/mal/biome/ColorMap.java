@@ -35,6 +35,8 @@ abstract public class ColorMap implements IColorMap {
     private static final int COLORMAP_HEIGHT = 256;
 
     public static final String BLOCK_COLORMAP_DIR = TexturePackAPI.MCPATCHER_SUBDIR + "colormap/blocks";
+    /** OptiFine directory counterpart of BLOCK_COLORMAP_DIR. / 与 BLOCK_COLORMAP_DIR 对应的 OptiFine 目录。 */
+    public static final String BLOCK_COLORMAP_DIR_OPTIFINE = TexturePackAPI.OPTIFINE_SUBDIR + "colormap/blocks";
     public static final List<ResourceLocation> unusedPNGs = new ArrayList<>();
 
     private static final String VANILLA_TYPE = "_vanillaType";
@@ -172,6 +174,9 @@ abstract public class ColorMap implements IColorMap {
         unusedPNGs.addAll(
             ResourceList.getInstance()
                 .listResources(BLOCK_COLORMAP_DIR, ".png", false));
+        unusedPNGs.addAll(
+            ResourceList.getInstance()
+                .listResources(BLOCK_COLORMAP_DIR_OPTIFINE, ".png", false));
         defaultColorMapFormat = parseFormat(properties.getString("palette.format", ""));
         defaultFlipY = properties.getBoolean("palette.flipY", false);
         defaultYVariance = properties.getFloat("palette.yVariance", 0.0f);

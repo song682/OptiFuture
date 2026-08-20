@@ -19,8 +19,10 @@ public class FireworksHelper {
 
     private static final int LIT_LAYER = 3;
     private static final int EXTRA_LAYER = LIT_LAYER + 1;
-    private static final ResourceLocation PARTICLE_PROPERTIES = TexturePackAPI
-        .newMCPatcherResourceLocation("particle.properties");
+    // Resolved at reload time against both the mcpatcher and the optifine directory.
+    // 在重载时解析，同时兼容 mcpatcher 与 optifine 两种目录。
+    private static final String PARTICLE_PROPERTIES_PATH = "particle.properties";
+    private static ResourceLocation particleProperties;
 
     private static final MCLogger logger = MCLogger.getLogger(MCLogger.Category.BETTER_SKIES);
     private static final boolean enable = MCPatcherForgeConfig.instance().brightenFireworks;
@@ -47,11 +49,12 @@ public class FireworksHelper {
     }
 
     static void reload() {
-        PropertiesFile properties = PropertiesFile.getNonNull(logger, PARTICLE_PROPERTIES);
+        particleProperties = TexturePackAPI.resolveDualResource(PARTICLE_PROPERTIES_PATH);
+        PropertiesFile properties = PropertiesFile.getNonNull(logger, particleProperties);
         String blend = properties.getString("blend." + EXTRA_LAYER, "add");
         blendMethod = BlendMethod.parse(blend);
         if (blendMethod == null) {
-            properties.error("%s: unknown blend method %s", PARTICLE_PROPERTIES, blend);
+            properties.error("%s: unknown blend method %s", particleProperties, blend);
         } else if (enable) {
             properties.config("using %s blending for fireworks particles", blendMethod);
         } else {

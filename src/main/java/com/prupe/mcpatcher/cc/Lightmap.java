@@ -52,8 +52,10 @@ public final class Lightmap {
         if (lightmaps.containsKey(worldType)) {
             lightmap = lightmaps.get(worldType);
         } else {
+            // Both the mcpatcher and the optifine directory are accepted.
+            // 同时接受 mcpatcher 与 optifine 两种目录。
             ResourceLocation resource = TexturePackAPI
-                .newMCPatcherResourceLocation(String.format(LIGHTMAP_FORMAT, worldType));
+                .resolveDualResource(String.format(LIGHTMAP_FORMAT, worldType));
             BufferedImage image = TexturePackAPI.getImage(resource);
             if (image != null) {
                 lightmap = new Lightmap(resource, image);
