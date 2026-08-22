@@ -15,4 +15,6 @@ public interface MapColorExpansion {
     int getOriginalColorValue();
 
     void setOriginalColorValue(int value);
+
+    void setColorValue(int value);
 }

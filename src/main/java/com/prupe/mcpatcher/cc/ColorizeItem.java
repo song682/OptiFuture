@@ -7,7 +7,6 @@ import java.util.Map;
 
 import net.minecraft.block.material.MapColor;
 import net.minecraft.potion.Potion;
-import net.minecraft.potion.PotionHelper;
 
 import com.prupe.mcpatcher.MCLogger;
 import com.prupe.mcpatcher.mal.resource.PropertiesFile;
@@ -48,20 +47,21 @@ public class ColorizeItem {
         // 1.5+btw: Calling PotionHelper on startup runs the static initializer which crashes because Potion class
         // hasn't finished initializing yet.
         if (potionsInitialized) {
-            if (PotionHelper.field_77925_n != null) {
-                PotionHelper.field_77925_n.clear();
+            java.util.Map<Potion, Integer> potionColorCache = decok.dfcdvadstf.optifuture.mixins.early.at.MixinPotionHelperAccess.getPotionColorCache();
+            if (potionColorCache != null) {
+                potionColorCache.clear();
             }
         }
         potionsInitialized = true;
 
         waterBottleColor = 0x385dc6;
         for (Potion potion : potions) {
-            potion.liquidColor = ((PotionExpansion) potion).getOrigColor();
+            ((PotionExpansion) potion).setLiquidColor(((PotionExpansion) potion).getOrigColor());
         }
 
         for (MapColor mapColor : MapColor.mapColorArray) {
             if (mapColor != null) {
-                mapColor.colorValue = ((MapColorExpansion) mapColor).getOriginalColorValue();
+                ((MapColorExpansion) mapColor).setColorValue(((MapColorExpansion) mapColor).getOriginalColorValue());
             }
         }
     }
@@ -80,7 +80,7 @@ public class ColorizeItem {
             if (MapColor.mapColorArray[i] != null) {
                 int[] rgb = new int[] { ((MapColorExpansion) MapColor.mapColorArray[i]).getOriginalColorValue() };
                 Colorizer.loadIntColor("map." + Colorizer.getStringKey(MAP_MATERIALS, i), rgb, 0);
-                MapColor.mapColorArray[i].colorValue = rgb[0];
+                ((MapColorExpansion) MapColor.mapColorArray[i]).setColorValue(rgb[0]);
             }
         }
     }

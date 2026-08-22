@@ -38,6 +38,9 @@ import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 import com.prupe.mcpatcher.mal.util.InputHandler;
 
 import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorTextureAtlasSprite;
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorTextureClock;
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorTextureMap;
 
 public class FancyDial {
 
@@ -172,7 +175,7 @@ public class FancyDial {
     static void registerAnimations() {
         ITextureObject texture = TexturePackAPI.getTextureObject(TexturePackAPI.ITEMS_PNG);
         if (texture instanceof TextureMap) {
-            List<TextureAtlasSprite> animations = ((TextureMap) texture).listAnimatedSprites;
+            List<TextureAtlasSprite> animations = ((AccessorTextureMap) texture).getListAnimatedSprites();
             for (FancyDial instance : instances.values()) {
                 instance.registerAnimation(animations);
             }
@@ -184,10 +187,11 @@ public class FancyDial {
             return;
         }
         animations.add(icon);
-        if (icon.framesTextureData == null) {
-            icon.framesTextureData = new ArrayList<>();
+        AccessorTextureAtlasSprite iconAccessor = (AccessorTextureAtlasSprite) icon;
+        if (iconAccessor.getFramesTextureData() == null) {
+            iconAccessor.setFramesTextureData(new ArrayList<>());
         }
-        if (icon.framesTextureData.isEmpty()) {
+        if (iconAccessor.getFramesTextureData().isEmpty()) {
             /*
              * TODO: figure out how to handle the code assuming int[][] <-> int[] due to 1.6 -> 1.7
              * int[] dummyRGB = new int[width * height];
@@ -195,7 +199,7 @@ public class FancyDial {
              */
             int[][] dummyRGB = new int[width * height][];
             Arrays.fill(dummyRGB[0], 0xffff00ff);
-            icon.framesTextureData.add(dummyRGB);
+            iconAccessor.getFramesTextureData().add(dummyRGB);
         }
         logger.fine("registered %s animation", name);
     }
@@ -496,7 +500,7 @@ public class FancyDial {
         if (icon instanceof TextureCompass) {
             return ((TextureCompass) icon).currentAngle * 180.0 / Math.PI;
         } else if (icon instanceof TextureClock) {
-            return ((TextureClock) icon).field_94239_h * 360.0; // currentAngle
+            return ((AccessorTextureClock) icon).getCurrentAngle() * 360.0; // currentAngle
         } else {
             return 0.0;
         }

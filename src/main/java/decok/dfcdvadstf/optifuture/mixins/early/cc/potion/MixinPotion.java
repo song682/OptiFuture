@@ -3,6 +3,8 @@ package decok.dfcdvadstf.optifuture.mixins.early.cc.potion;
 import net.minecraft.potion.Potion;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,6 +24,10 @@ import decok.dfcdvadstf.optifuture.interfaces.PotionExpansion;
 @Mixin(Potion.class)
 public abstract class MixinPotion implements PotionExpansion {
 
+    @Mutable
+    @Shadow
+    protected int liquidColor;
+
     /** Original liquid color captured before customization. / 自定义前捕获的原始液体颜色。 */
     @Unique
     private int optiFuture$originalColor;
@@ -39,5 +45,15 @@ public abstract class MixinPotion implements PotionExpansion {
     @Override
     public int getOrigColor() {
         return this.optiFuture$originalColor;
+    }
+
+    @Override
+    public void setLiquidColor(int color) {
+        this.liquidColor = color;
+    }
+
+    @Override
+    public int getLiquidColor() {
+        return this.liquidColor;
     }
 }

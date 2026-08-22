@@ -87,7 +87,8 @@ public final class Lightmap {
     private float getNightVisionStrength(EntityRenderer renderer, float n) {
 
         if (Minecraft.getMinecraft().thePlayer.isPotionActive(Potion.nightVision)) {
-            return renderer.getNightVisionBrightness(Minecraft.getMinecraft().thePlayer, n);
+            return ((decok.dfcdvadstf.optifuture.mixins.early.at.AccessorEntityRenderer) renderer)
+                .callNightVisionBrightness(Minecraft.getMinecraft().thePlayer, n);
         }
         return 0.0f;
     }
@@ -95,7 +96,9 @@ public final class Lightmap {
     private boolean compute(EntityRenderer renderer, World world, int[] mapRGB, float partialTick) {
         float sun = ColorUtils.clamp(
             world.lastLightningBolt > 0 ? 1.0f : 7.0f / 6.0f * (world.getSunBrightness(1.0f) - 0.2f)) * (width - 1);
-        float torch = ColorUtils.clamp(renderer.torchFlickerX + 0.5f) * (width - 1);
+        float torch = ColorUtils.clamp(
+            ((decok.dfcdvadstf.optifuture.mixins.early.at.AccessorEntityRenderer) renderer).getTorchFlickerX() + 0.5f)
+            * (width - 1);
         float nightVisionStrength = getNightVisionStrength(renderer, partialTick);
         float gamma = ColorUtils.clamp(Minecraft.getMinecraft().gameSettings.gammaSetting);
         for (int i = 0; i < LIGHTMAP_SIZE; i++) {

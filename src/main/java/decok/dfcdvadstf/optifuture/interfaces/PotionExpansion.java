@@ -15,4 +15,8 @@ public interface PotionExpansion {
     void setOrigColor(int color);
 
     int getOrigColor();
+
+    void setLiquidColor(int color);
+
+    int getLiquidColor();
 }

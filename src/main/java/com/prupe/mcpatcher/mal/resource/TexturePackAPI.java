@@ -35,6 +35,9 @@ import com.prupe.mcpatcher.MCLogger;
 import com.prupe.mcpatcher.MCPatcherUtils;
 
 import decok.dfcdvadstf.optifuture.interfaces.AbstractTextureExpansion;
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorFallbackResourceManager;
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorSimpleReloadableResourceManager;
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorTextureManager;
 
 public class TexturePackAPI {
 
@@ -53,11 +56,11 @@ public class TexturePackAPI {
         List<IResourcePack> resourcePacks = new ArrayList<>();
         IResourceManager resourceManager = getResourceManager();
         if (resourceManager instanceof SimpleReloadableResourceManager) {
-            Set<Map.Entry<String, FallbackResourceManager>> entrySet = ((SimpleReloadableResourceManager) resourceManager).domainResourceManagers
+            Set<Map.Entry<String, FallbackResourceManager>> entrySet = ((AccessorSimpleReloadableResourceManager) resourceManager).getDomainResourceManagers()
                 .entrySet();
             for (Map.Entry<String, FallbackResourceManager> entry : entrySet) {
                 if (namespace == null || namespace.equals(entry.getKey())) {
-                    List<IResourcePack> packs = entry.getValue().resourcePacks;
+                    List<IResourcePack> packs = ((AccessorFallbackResourceManager) entry.getValue()).getResourcePacks();
                     if (packs != null) {
                         resourcePacks.removeAll(packs);
                         resourcePacks.addAll(packs);
@@ -73,7 +76,7 @@ public class TexturePackAPI {
         namespaces.add(DEFAULT_NAMESPACE);
         IResourceManager resourceManager = getResourceManager();
         if (resourceManager instanceof SimpleReloadableResourceManager) {
-            namespaces.addAll(((SimpleReloadableResourceManager) resourceManager).domainResourceManagers.keySet());
+            namespaces.addAll(((AccessorSimpleReloadableResourceManager) resourceManager).getDomainResourceManagers().keySet());
         }
         return namespaces;
     }
@@ -349,7 +352,7 @@ public class TexturePackAPI {
                     ((AbstractTextureExpansion) texture).unloadGLTexture();
                 }
                 logger.finer("unloading texture %s", resource);
-                textureManager.mapTextureObjects.remove(resource);
+                ((AccessorTextureManager) textureManager).getMapTextureObjects().remove(resource);
             }
         }
     }
@@ -359,7 +362,7 @@ public class TexturePackAPI {
             .getTextureManager();
         if (textureManager != null) {
             Set<ResourceLocation> texturesToUnload = new HashSet<>();
-            Set<Map.Entry<ResourceLocation, ITextureObject>> entrySet = textureManager.mapTextureObjects.entrySet();
+            Set<Map.Entry<ResourceLocation, ITextureObject>> entrySet = ((AccessorTextureManager) textureManager).getMapTextureObjects().entrySet();
             for (Map.Entry<ResourceLocation, ITextureObject> entry : entrySet) {
                 ResourceLocation resource = entry.getKey();
                 ITextureObject texture = entry.getValue();

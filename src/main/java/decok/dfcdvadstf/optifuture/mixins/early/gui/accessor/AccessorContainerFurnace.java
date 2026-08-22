@@ -1,4 +1,4 @@
-package decok.dfcdvadstf.optifuture.mixins.early.gui;
+package decok.dfcdvadstf.optifuture.mixins.early.gui.accessor;
 
 import net.minecraft.inventory.ContainerFurnace;
 import net.minecraft.tileentity.TileEntityFurnace;

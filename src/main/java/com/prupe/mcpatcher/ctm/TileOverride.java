@@ -501,7 +501,8 @@ abstract class TileOverride implements ITileOverride {
             case CONNECT_BY_BLOCK:
                 return renderBlockState.shouldConnectByBlock(neighbor, i, j, k);
             case CONNECT_BY_MATERIAL:
-                return block.blockMaterial == neighbor.blockMaterial;
+                return ((decok.dfcdvadstf.optifuture.mixins.early.at.AccessorBlock) block).getBlockMaterial()
+                    == ((decok.dfcdvadstf.optifuture.mixins.early.at.AccessorBlock) neighbor).getBlockMaterial();
             default:
                 return false;
         }

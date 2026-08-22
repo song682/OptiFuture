@@ -27,6 +27,8 @@ import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 import com.prupe.mcpatcher.mal.tile.TileLoader;
 
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorEntityPotion;
+
 import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 import decok.dfcdvadstf.optifuture.interfaces.NBTTagListExpansion;
 
@@ -214,7 +216,7 @@ public class CITUtils {
 
     public static IIcon getEntityIcon(IIcon icon, Entity entity) {
         if (entity instanceof EntityPotion) {
-            return getIcon(icon, ((EntityPotion) entity).potionDamage, 1);
+            return getIcon(icon, ((AccessorEntityPotion) entity).getPotionDamage(), 1);
         }
         return icon;
     }

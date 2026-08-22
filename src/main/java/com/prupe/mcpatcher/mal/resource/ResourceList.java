@@ -23,6 +23,10 @@ import net.minecraft.util.ResourceLocation;
 import com.prupe.mcpatcher.MCLogger;
 import com.prupe.mcpatcher.MCPatcherUtils;
 
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorAbstractResourcePack;
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorDefaultResourcePack;
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorFileResourcePack;
+
 public class ResourceList {
 
     private static final MCLogger logger = MCLogger.getLogger(MCLogger.Category.TEXTURE_PACK);
@@ -88,7 +92,7 @@ public class ResourceList {
     private ResourceList(FileResourcePack resourcePack) {
         this.resourcePack = resourcePack;
         try {
-            scanZipFile(resourcePack.getResourcePackZipFile());
+            scanZipFile(((AccessorFileResourcePack) resourcePack).callGetResourcePackZipFile());
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
@@ -110,7 +114,7 @@ public class ResourceList {
                 MCPatcherUtils.close(zipFile);
             }
         }
-        Map<String, File> map = resourcePack.field_152781_b; // map
+        Map<String, File> map = ((AccessorDefaultResourcePack) resourcePack).getFileMap(); // map
         if (map != null) {
             for (Map.Entry<String, File> entry : map.entrySet()) {
                 String key = entry.getKey();
@@ -126,7 +130,7 @@ public class ResourceList {
 
     private ResourceList(AbstractResourcePack resourcePack) {
         this.resourcePack = resourcePack;
-        File directory = resourcePack.resourcePackFile;
+        File directory = ((AccessorAbstractResourcePack) resourcePack).getResourcePackFile();
         if (directory == null || !directory.isDirectory()) {
             return;
         }

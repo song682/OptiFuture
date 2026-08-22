@@ -16,6 +16,7 @@ import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 
 import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 import decok.dfcdvadstf.optifuture.interfaces.FontRendererExpansion;
+import decok.dfcdvadstf.optifuture.mixins.early.at.AccessorFontRenderer;
 
 public class FontUtils {
 
@@ -47,7 +48,7 @@ public class FontUtils {
             @Override
             public void afterChange() {
                 for (FontRenderer renderer : allRenderers) {
-                    renderer.readFontTexture();
+                    ((AccessorFontRenderer) renderer).callReadFontTexture();
                 }
             }
         });

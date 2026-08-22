@@ -1,4 +1,4 @@
-package decok.dfcdvadstf.optifuture.mixins.early.gui;
+package decok.dfcdvadstf.optifuture.mixins.early.gui.accessor;
 
 import net.minecraft.inventory.ContainerMerchant;
 import net.minecraft.entity.IMerchant;

@@ -45,19 +45,18 @@ import net.minecraft.inventory.InventoryLargeChest;
 import net.minecraft.tileentity.TileEntityBeacon;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.tileentity.TileEntityDispenser;
-import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
-import decok.dfcdvadstf.optifuture.mixins.early.gui.AccessorContainerBeacon;
-import decok.dfcdvadstf.optifuture.mixins.early.gui.AccessorContainerDispenser;
-import decok.dfcdvadstf.optifuture.mixins.early.gui.AccessorContainerFurnace;
-import decok.dfcdvadstf.optifuture.mixins.early.gui.AccessorContainerHopper;
-import decok.dfcdvadstf.optifuture.mixins.early.gui.AccessorContainerHorseInventory;
-import decok.dfcdvadstf.optifuture.mixins.early.gui.AccessorContainerMerchant;
-import decok.dfcdvadstf.optifuture.mixins.early.gui.AccessorGuiEnchantment;
-import decok.dfcdvadstf.optifuture.mixins.early.gui.AccessorGuiMerchant;
-import decok.dfcdvadstf.optifuture.mixins.early.gui.AccessorInventoryLargeChest;
+import decok.dfcdvadstf.optifuture.mixins.early.gui.accessor.AccessorContainerBeacon;
+import decok.dfcdvadstf.optifuture.mixins.early.gui.accessor.AccessorContainerDispenser;
+import decok.dfcdvadstf.optifuture.mixins.early.gui.accessor.AccessorContainerFurnace;
+import decok.dfcdvadstf.optifuture.mixins.early.gui.accessor.AccessorContainerHopper;
+import decok.dfcdvadstf.optifuture.mixins.early.gui.accessor.AccessorContainerHorseInventory;
+import decok.dfcdvadstf.optifuture.mixins.early.gui.accessor.AccessorContainerMerchant;
+import decok.dfcdvadstf.optifuture.mixins.early.gui.accessor.AccessorGuiEnchantment;
+import decok.dfcdvadstf.optifuture.mixins.early.gui.accessor.AccessorGuiMerchant;
+import decok.dfcdvadstf.optifuture.mixins.early.gui.accessor.AccessorInventoryLargeChest;
 
 import com.prupe.mcpatcher.MCLogger;
 import com.prupe.mcpatcher.MCPatcherUtils;
