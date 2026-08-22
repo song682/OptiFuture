@@ -279,13 +279,22 @@ artifacts {
 
 if (project.include_license.toBoolean()){
     jar {
-        from fileTree(dir: "License")
+        from file("./LICENSE-Assets")
+        from file("./LICENSE-MCPatcherForge")
+        from file("./LICENSE-ModernFeature")
+        from file("./LICENSE-Original")
     }
     deobfJar {
-        from fileTree(dir: "License")
+        from file("./LICENSE-Assets")
+        from file("./LICENSE-MCPatcherForge")
+        from file("./LICENSE-ModernFeature")
+        from file("./LICENSE-Original")
     }
     sourcesJar {
-        from fileTree(dir: "License")
+        from file("./LICENSE-Assets")
+        from file("./LICENSE-MCPatcherForge")
+        from file("./LICENSE-ModernFeature")
+        from file("./LICENSE-Original")
     }
 }
 
