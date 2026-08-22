@@ -234,6 +234,12 @@ if (project.enableUsingKotlin.toBoolean()) {
     }
 }
 
+jar {
+    from("./doc") {
+        into("doc")
+    }
+}
+
 tasks.register('deobfJar', Jar) {
     dependsOn reobf
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
@@ -241,6 +247,10 @@ tasks.register('deobfJar', Jar) {
 
     from sourceSets.main.output
     manifest.attributes(jar.manifest.getAttributes())
+
+    from("./doc") {
+        into("doc")
+    }
 }
 
 tasks.register('sourcesJar', Jar) {
@@ -251,6 +261,10 @@ tasks.register('sourcesJar', Jar) {
     from sourceSets.main.allSource
     exclude "methods.bin"
     exclude "McpToSrg.csv"
+
+    from("./doc") {
+        into("doc")
+    }
 }
 
 tasks.register("updateGradleProperties") {
