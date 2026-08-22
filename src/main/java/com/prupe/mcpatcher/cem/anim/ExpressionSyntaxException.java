@@ -8,6 +8,8 @@ package com.prupe.mcpatcher.cem.anim;
  */
 public class ExpressionSyntaxException extends IllegalArgumentException {
 
+    private static final long serialVersionUID = 1L;
+
     public ExpressionSyntaxException(String message) {
         super(message);
     }

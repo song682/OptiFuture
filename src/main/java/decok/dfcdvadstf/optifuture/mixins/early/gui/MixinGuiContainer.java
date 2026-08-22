@@ -37,7 +37,8 @@ import com.prupe.mcpatcher.gui.CustomGuis;
  * bindTexture 调用点），注入检查会失败并导致整个类无法加载。
  */
 @Mixin(
-    value = { GuiChest.class, GuiCrafting.class, GuiFurnace.class, GuiDispenser.class,
+    value = {
+        GuiChest.class, GuiCrafting.class, GuiFurnace.class, GuiDispenser.class,
         GuiEnchantment.class, GuiBrewingStand.class, GuiBeacon.class, GuiMerchant.class, GuiRepair.class,
         GuiHopper.class, GuiScreenHorseInventory.class, GuiInventory.class, GuiContainerCreative.class })
 public abstract class MixinGuiContainer {

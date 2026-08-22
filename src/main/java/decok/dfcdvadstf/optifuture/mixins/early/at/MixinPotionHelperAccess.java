@@ -2,6 +2,7 @@ package decok.dfcdvadstf.optifuture.mixins.early.at;
 
 import java.util.HashMap;
 
+import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionHelper;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +22,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface MixinPotionHelperAccess {
 
     @Accessor("field_77925_n")
-    static HashMap getField_77925_n() {
+    static HashMap<Potion, Integer> getColorCache() {
         throw new AssertionError("Untransformed @Accessor");
     }
 }
