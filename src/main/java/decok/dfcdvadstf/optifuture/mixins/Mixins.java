@@ -44,6 +44,22 @@ public enum Mixins {
             "renderpass.MixinRenderBlocks",
             "renderpass.MixinRenderGlobal",
             "renderpass.MixinWorldRenderer")
+        .addMixinClasses(
+            addPrefix("at.",
+                "AccessorBlock",
+                "AccessorEntityRenderer",
+                "AccessorTextureMap",
+                "AccessorTextureManager",
+                "AccessorTextureClock",
+                "AccessorAbstractResourcePack",
+                "AccessorDefaultResourcePack",
+                "AccessorFallbackResourceManager",
+                "AccessorSimpleReloadableResourceManager",
+                "AccessorFontRenderer",
+                "AccessorFileResourcePack",
+                "AccessorEntityPotion",
+                "AccessorTextureAtlasSprite",
+                "MixinPotionHelperAccess"))
 
     ),
 
@@ -190,10 +206,16 @@ public enum Mixins {
         .addTargetedMod(TargetedMod.VANILLA)
         .addMixinClasses("gui.MixinGuiContainer")
         .addMixinClasses(
-            addPrefix("gui.",
-                "AccessorContainerBeacon", "AccessorContainerDispenser", "AccessorContainerFurnace",
-                "AccessorContainerHopper", "AccessorContainerHorseInventory", "AccessorContainerMerchant",
-                "AccessorInventoryLargeChest", "AccessorGuiEnchantment", "AccessorGuiMerchant"))),
+            addPrefix("gui.accessor.",
+                "AccessorContainerBeacon",
+                "AccessorContainerDispenser",
+                "AccessorContainerFurnace",
+                "AccessorContainerHopper",
+                "AccessorContainerHorseInventory",
+                "AccessorContainerMerchant",
+                "AccessorInventoryLargeChest",
+                "AccessorGuiEnchantment",
+                "AccessorGuiMerchant"))),
 
     CC_NO_CTM(new Builder("Custom colors, no connected textures").setSide(Side.CLIENT)
         .setPhase(Phase.EARLY)
