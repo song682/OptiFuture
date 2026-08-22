@@ -13,16 +13,13 @@ out
 *.iml
 /.idea/
 /idea/
+/.vscode/
 /.qoder/
 
 # gradle
 /build/
 /.gradle/
 /gradle/
-*.gradle
-gradlew
-gradlew.bat
-
 
 # minecraft
 minecraft

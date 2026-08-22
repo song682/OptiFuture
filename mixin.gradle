@@ -1,0 +1,57 @@
+repositories {
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
+def unimixinsVersion = project.findProperty('unimixinsVersion')
+
+dependencies {
+    implementation("com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:$unimixinsVersion:dev")
+    annotationProcessor("com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:$unimixinsVersion:dev")
+}
+
+// Dev environment: coremods on the classpath are not discovered via the jar manifest,
+// so MCPatcherForgeCore (IFMLLoadingPlugin + IEarlyMixinLoader) must be passed explicitly.
+// 开发环境：类路径上的核心模组不会通过 jar 清单被发现，
+// 因此必须显式传入 MCPatcherForgeCore（IFMLLoadingPlugin + IEarlyMixinLoader）。
+def fmlCorePluginClass = project.findProperty('fmlCorePluginClass')
+
+runClient {
+    args("--tweakClass", "org.spongepowered.asm.launch.MixinTweaker")
+    if (fmlCorePluginClass) { jvmArgs("-Dfml.coreMods.load=${fmlCorePluginClass}") }
+}
+
+runServer {
+    args("--tweakClass", "org.spongepowered.asm.launch.MixinTweaker")
+    if (fmlCorePluginClass) { jvmArgs("-Dfml.coreMods.load=${fmlCorePluginClass}") }
+}
+
+def outSrgFile = "${tasks.compileJava.temporaryDir}/outSrg.srg"
+def outRefMapFile = "${tasks.compileJava.temporaryDir}/mixins.${modId}.refmap.json"
+
+jar {
+    manifest {
+        // Production jar: mixins are registered by the coremod through UniMixins'
+        // GTNHMixins-compat IEarlyMixinLoader, NOT via TweakClass/MixinConfigs.
+        // On FML 1.7.10 a 'TweakClass' attribute makes CoreModManager skip the
+        // 'FMLCorePlugin' attribute entirely, so it must not be present here.
+        // 生产环境 jar：mixin 由核心模组通过 UniMixins 的 GTNHMixins 兼容层
+        // IEarlyMixinLoader 注册，而不是通过 TweakClass/MixinConfigs。
+        // 在 FML 1.7.10 中，jar 清单一旦带有 'TweakClass'，CoreModManager 会直接跳过
+        // 'FMLCorePlugin' 属性，因此这里绝不能声明 TweakClass。
+        attributes (
+                'FMLCorePlugin': "${fmlCorePluginClass}",
+                'FMLCorePluginContainsFMLMod': 'true',
+                'ForceLoadAsMod': 'true',
+        )
+    }
+
+    from outRefMapFile;
+}
+
+tasks.compileJava.options.compilerArgs += ["-AreobfSrgFile=${tasks.reobf.srg}", "-AoutSrgFile=${outSrgFile}", "-AoutRefMapFile=${outRefMapFile}"];
+
+reobf {
+    addExtraSrgFile outSrgFile
+}
