@@ -47,7 +47,7 @@ public class ColorizeItem {
         // 1.5+btw: Calling PotionHelper on startup runs the static initializer which crashes because Potion class
         // hasn't finished initializing yet.
         if (potionsInitialized) {
-            java.util.Map<Potion, Integer> potionColorCache = decok.dfcdvadstf.optifuture.mixins.early.at.MixinPotionHelperAccess.getPotionColorCache();
+            java.util.Map<Potion, Integer> potionColorCache = decok.dfcdvadstf.optifuture.mixins.early.at.MixinPotionHelperAccess.getField_77925_n();
             if (potionColorCache != null) {
                 potionColorCache.clear();
             }
