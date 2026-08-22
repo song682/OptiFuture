@@ -37,6 +37,7 @@ public class MCPatcherUtils {
     public static final String CUSTOM_ENTITY_MODELS = "Custom Entity Models";
     public static final String CUSTOM_PANORAMA = "Custom Panorama";
     public static final String CUSTOM_LOADING_SCREENS = "Custom Loading Screens";
+    public static final String CUSTOM_GUIS = "Custom GUIs";
     public static final String NATURAL_TEXTURES = "Natural Textures";
     public static final String MIPMAP = "Mipmap";
 

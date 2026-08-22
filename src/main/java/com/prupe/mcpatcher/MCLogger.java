@@ -80,6 +80,9 @@ public class MCLogger {
                 // 自定义加载屏幕与 Better Skies 共用日志配置，因为其开关位于同一配置分类下。
                 levelName = config.betterSkiesLoggingLevel;
                 break;
+            case CUSTOM_GUIS:
+                levelName = config.customGuisLoggingLevel;
+                break;
             case NATURAL_TEXTURES:
                 levelName = config.naturalTexturesLoggingLevel;
                 break;
@@ -221,6 +224,7 @@ public class MCLogger {
         CUSTOM_ENTITY_MODELS(MCPatcherUtils.CUSTOM_ENTITY_MODELS),
         CUSTOM_PANORAMA(MCPatcherUtils.CUSTOM_PANORAMA),
         CUSTOM_LOADING_SCREENS(MCPatcherUtils.CUSTOM_LOADING_SCREENS),
+        CUSTOM_GUIS(MCPatcherUtils.CUSTOM_GUIS),
         TEXTURE_PACK("Texture Pack"),
 
         TILESHEET("Tilesheet"),

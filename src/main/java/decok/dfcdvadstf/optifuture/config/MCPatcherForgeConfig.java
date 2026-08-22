@@ -109,6 +109,11 @@ public class MCPatcherForgeConfig {
     public boolean naturalTexturesEnabled;
     public String naturalTexturesLoggingLevel;
 
+    // CUSTOM_GUIS
+    // 自定义容器 GUI 纹理：按 {mcpatcher|optifine}/gui/container 下的规则替换容器界面贴图。
+    public boolean customGuisEnabled;
+    public String customGuisLoggingLevel;
+
     public enum Category {
 
         CUSTOM_COLORS,
@@ -118,7 +123,8 @@ public class MCPatcherForgeConfig {
         RANDOM_MOBS,
         BETTER_SKIES,
         CUSTOM_ENTITY_MODELS,
-        NATURAL_TEXTURES;
+        NATURAL_TEXTURES,
+        CUSTOM_GUIS;
 
         @Override
         public String toString() {
@@ -212,6 +218,9 @@ public class MCPatcherForgeConfig {
 
         naturalTexturesEnabled = config.get(Category.NATURAL_TEXTURES.toString(),"enabled",true,"Enable the natural textures module").getBoolean();
         naturalTexturesLoggingLevel = config.get(Category.NATURAL_TEXTURES.toString(),"logging",Level.INFO.getName(),"logging level").getString();
+
+        customGuisEnabled = config.get(Category.CUSTOM_GUIS.toString(),"enabled",true,"Enable the custom GUIs module").getBoolean();
+        customGuisLoggingLevel = config.get(Category.CUSTOM_GUIS.toString(),"logging",Level.INFO.getName(),"logging level").getString();
 
         // spotless:on
         if (config.hasChanged()) config.save();

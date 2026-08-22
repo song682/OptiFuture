@@ -132,7 +132,11 @@ public enum Mixins {
         .setApplyIf(() -> MCPatcherForgeConfig.instance().extendedHDEnabled)
         .addTargetedMod(TargetedMod.VANILLA)
         .addMixinClasses(
-            addPrefix("hd.", "MixinFontRenderer", "MixinTextureClock", "MixinTextureCompass", "MixinTextureManager"))),
+            addPrefix("hd.",
+            "MixinFontRenderer",
+            "MixinTextureClock",
+            "MixinTextureCompass",
+            "MixinTextureManager"))),
 
     RANDOM_MOBS(new Builder("Random Mobs").setSide(Side.CLIENT)
         .setPhase(Phase.EARLY)
@@ -177,6 +181,19 @@ public enum Mixins {
                 && MCPatcherForgeConfig.instance().customLoadingScreens)
         .addTargetedMod(TargetedMod.VANILLA)
         .addMixinClasses("gui.MixinGuiDownloadTerrain", "gui.MixinGuiScreenWorking")),
+
+    // Custom container GUI textures (rules under {mcpatcher|optifine}/gui/container).
+    // 自定义容器 GUI 纹理（{mcpatcher|optifine}/gui/container 下的规则）。
+    CUSTOM_GUIS(new Builder("Custom GUIs").setSide(Side.CLIENT)
+        .setPhase(Phase.EARLY)
+        .setApplyIf(() -> MCPatcherForgeConfig.instance().customGuisEnabled)
+        .addTargetedMod(TargetedMod.VANILLA)
+        .addMixinClasses("gui.MixinGuiContainer")
+        .addMixinClasses(
+            addPrefix("gui.",
+                "AccessorContainerBeacon", "AccessorContainerDispenser", "AccessorContainerFurnace",
+                "AccessorContainerHopper", "AccessorContainerHorseInventory", "AccessorContainerMerchant",
+                "AccessorInventoryLargeChest", "AccessorGuiEnchantment", "AccessorGuiMerchant"))),
 
     CC_NO_CTM(new Builder("Custom colors, no connected textures").setSide(Side.CLIENT)
         .setPhase(Phase.EARLY)
