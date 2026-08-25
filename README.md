@@ -10,7 +10,7 @@ Implimenting it only via [doc from Optifine](https://github.com/sp614x/optifine/
 # 🌿Featrues (Via OptiFine doc, Impilmented will have a mark)
 
 - [x] [backgound.properties](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/background.properties)
-- [ ] CEM (Custom Entity Model) series: [cem_part.txt](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_part.txt), [cem_model](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_model.txt), [cem_animation.txt](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_animation.txt). (CEM Loader was created while none of one Mixin implimentation is finished)
+- [ ] CEM (Custom Entity Model) series: [cem_part.txt](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_part.txt), [cem_model](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_model.txt), [cem_animation.txt](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_animation.txt). (CEM Loader was created, while none of one Mixin implimentation is finished)
 - [x] ctm_compact, overlay series from modern [ctm.properties](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/ctm.properties#L73C1-L84C10)
 - [ ] [Continuity-Connected-Textures-Specification](https://github.com/PepperCode1/Continuity/wiki/Continuity-Connected-Textures-Specification)
 - [x] [custom_guis.properties](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/custom_guis.properties)
