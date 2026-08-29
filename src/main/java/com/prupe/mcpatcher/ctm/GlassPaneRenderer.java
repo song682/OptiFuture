@@ -54,7 +54,7 @@ public class GlassPaneRenderer {
         }
         for (int face = BlockOrientation.NORTH_FACE; face <= BlockOrientation.EAST_FACE; face++) {
             icons[face] = CTMUtils
-                .getBlockIcon(origIcon, renderBlocks, blockPane, renderBlocks.blockAccess, i, j, k, face);
+                .getBlockIcon(origIcon, blockPane, renderBlocks.blockAccess, i, j, k, face);
             if (icons[face] == null) {
                 skipPaneRendering = false;
                 return false;

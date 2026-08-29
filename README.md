@@ -7,7 +7,7 @@ Implimenting it only via [doc from Optifine](https://github.com/sp614x/optifine/
 
 ----
 
-# 🌿Featrues (Via OptiFine doc, Impilmented will have a mark)
+# 🌿Featrues (Via OptiFine doc, impilmented will have a check mark)
 
 - [x] [backgound.properties](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/background.properties)
 - [ ] CEM (Custom Entity Model) series: [cem_part.txt](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_part.txt), [cem_model](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_model.txt), [cem_animation.txt](https://github.com/sp614x/optifine/blob/master/OptiFineDoc/doc/cem_animation.txt). (CEM Loader was created, while none of one Mixin implimentation is finished)

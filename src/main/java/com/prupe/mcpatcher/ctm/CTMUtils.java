@@ -129,7 +129,7 @@ public class CTMUtils {
         haveBlockFace = false;
     }
 
-    public static IIcon getBlockIcon(IIcon icon, RenderBlocks renderBlocks, Block block, IBlockAccess blockAccess,
+    public static IIcon getBlockIcon(IIcon icon, Block block, IBlockAccess blockAccess,
         int i, int j, int k, int face) {
         lastOverride = null;
         if (blockAccess != null && checkFace(face)) {

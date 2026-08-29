@@ -960,7 +960,6 @@ public abstract class MixinRenderBlocks {
         BlockDoublePlant specializedBlock, int x, int y, int z) {
         return CTMUtils.getBlockIcon(
             block.func_149888_a(top, meta),
-            (RenderBlocks) (Object) this,
             block,
             this.blockAccess,
             x,
@@ -980,7 +979,6 @@ public abstract class MixinRenderBlocks {
     private IIcon optiFuture$redirectGrassSideOverlay1(Block block, int x, int y, int z, float red, float green, float blue) {
         return CTMUtils.getBlockIcon(
             BlockGrass.getIconSideOverlay(),
-            (RenderBlocks) (Object) this,
             block,
             this.blockAccess,
             x,
@@ -1000,7 +998,6 @@ public abstract class MixinRenderBlocks {
     private IIcon optiFuture$redirectGrassSideOverlay2(Block block, int x, int y, int z, float red, float green, float blue) {
         return CTMUtils.getBlockIcon(
             BlockGrass.getIconSideOverlay(),
-            (RenderBlocks) (Object) this,
             block,
             this.blockAccess,
             x,
@@ -1020,7 +1017,6 @@ public abstract class MixinRenderBlocks {
     private IIcon optiFuture$redirectGrassSideOverlay3(Block block, int x, int y, int z, float red, float green, float blue) {
         return CTMUtils.getBlockIcon(
             BlockGrass.getIconSideOverlay(),
-            (RenderBlocks) (Object) this,
             block,
             this.blockAccess,
             x,
@@ -1040,7 +1036,6 @@ public abstract class MixinRenderBlocks {
     private IIcon optiFuture$redirectGrassSideOverlay4(Block block, int x, int y, int z, float red, float green, float blue) {
         return CTMUtils.getBlockIcon(
             BlockGrass.getIconSideOverlay(),
-            (RenderBlocks) (Object) this,
             block,
             this.blockAccess,
             x,
@@ -1069,7 +1064,6 @@ public abstract class MixinRenderBlocks {
         int y, int z, int side) {
         return CTMUtils.getBlockIcon(
             this.getIconSafe(block.getIcon(blockAccess, x, y, z, side)),
-            (RenderBlocks) (Object) this,
             block,
             blockAccess,
             x,

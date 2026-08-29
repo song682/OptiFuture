@@ -1,6 +1,7 @@
 package decok.dfcdvadstf.optifuture;
 
 import cpw.mods.fml.common.Mod;
+import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
 
 /**
  * Forge mod entry point. The class body is intentionally empty: the actual
