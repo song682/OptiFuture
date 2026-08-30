@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.google.common.collect.Multimap;
 import com.prupe.mcpatcher.MCPatcherUtils;
 import com.prupe.mcpatcher.cc.Colorizer;
+import com.prupe.mcpatcher.cem.CustomEntityModels;
 import com.prupe.mcpatcher.cit.CITUtils;
 import com.prupe.mcpatcher.ctm.CTMUtils;
 import com.prupe.mcpatcher.hd.FontUtils;
@@ -106,6 +107,9 @@ public abstract class MixinMinecraft {
         if (config.naturalTexturesEnabled) {
             NaturalTextures.init();
         }
+        if (config.customEntityModelsEnabled) {
+            CustomEntityModels.init();
+        }
     }
 
     /**
@@ -164,12 +168,16 @@ public abstract class MixinMinecraft {
     }
 
     /**
-     * Checks for a texture-pack change at the start of every game loop.
+     * Checks for a texture-pack change at the start of every game loop and advances
+     * the custom entity model animation clock once per frame.
      * <p>
-     * 在每个游戏循环开头检查材质包是否发生变更。
+     * 在每个游戏循环开头检查材质包是否发生变更，并推进自定义实体模型的动画时钟。
      */
     @Inject(method = "runGameLoop()V", at = @At(value = "HEAD"))
     private void optiFuture$pollTexturePackChange(CallbackInfo ci) {
         TexturePackChangeHandler.checkForTexturePackChange();
+        if (MCPatcherForgeConfig.instance().customEntityModelsEnabled) {
+            CustomEntityModels.beginFrame();
+        }
     }
 }

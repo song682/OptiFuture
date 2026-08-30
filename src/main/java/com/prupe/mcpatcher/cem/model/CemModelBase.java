@@ -67,6 +67,11 @@ public class CemModelBase extends ModelBase {
     /** Compiled animations in declaration order. / 按声明顺序编译的动画。 */
     private final List<PartAnimation> animations = new ArrayList<>();
 
+    // Per-entity-per-frame animation guard, written by the CEM orchestrator
+    // 每实体每帧的动画去重守卫，由 CEM 编排器写入
+    public long lastAnimatedFrame = -1L;
+    public Entity lastAnimatedEntity;
+
     /** Specs already warned about, to log each only once. / 已告警过的引用，避免重复日志。 */
     private final Set<String> warnedSpecs = new HashSet<>();
 

@@ -172,6 +172,18 @@ public enum Mixins {
                 "MixinRenderWolf",
                 "MixinEntityLivingBase"))),
 
+    // Custom Entity Models: .jem/.jpm part replacement and animation expressions.
+    // 自定义实体模型：.jem/.jpm 部件替换与动画表达式。
+    CUSTOM_ENTITY_MODELS(new Builder("Custom Entity Models").setSide(Side.CLIENT)
+        .setPhase(Phase.EARLY)
+        .setApplyIf(() -> MCPatcherForgeConfig.instance().customEntityModelsEnabled)
+        .addTargetedMod(TargetedMod.VANILLA)
+        .addMixinClasses(
+            addPrefix(
+                "cem.",
+                "MixinRenderManager",
+                "AccessorRender"))),
+
     SKY(new Builder("Sky").setSide(Side.CLIENT)
         .setPhase(Phase.EARLY)
         .setApplyIf(() -> MCPatcherForgeConfig.instance().betterSkiesEnabled)

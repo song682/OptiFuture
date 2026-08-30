@@ -10,6 +10,7 @@ import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RendererLivingEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ResourceLocation;
 
@@ -24,6 +25,7 @@ import com.prupe.mcpatcher.mal.resource.TexturePackAPI;
 import com.prupe.mcpatcher.mal.resource.TexturePackChangeHandler;
 
 import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
+import decok.dfcdvadstf.optifuture.mixins.early.cem.AccessorRender;
 
 /**
  * Custom Entity Models orchestrator. On every resource pack (re)load it scans
@@ -31,13 +33,13 @@ import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
  * the {@code ModelRenderer} fields of the live vanilla models (via
  * {@link CemPartMapper}), so vanilla {@code setRotationAngles} keeps driving the
  * replaced parts. Animations are evaluated per rendered entity through
- * {@link #runAnimations}, invoked by the render hook after the vanilla rotation
- * angles are set.
+ * {@link #runAnimations}, invoked from each custom part's render pass after the
+ * vanilla rotation angles are set.
  * <p>
  * 自定义实体模型编排器。每次资源包（重新）加载时扫描
  * "optifine/cem/&lt;entity&gt;.jem"，构建 {@link CemModelBase} 并（经
  * {@link CemPartMapper}）替换运行中原版模型的 {@code ModelRenderer} 字段，因此原版
- * {@code setRotationAngles} 仍会驱动被替换的部件。动画由渲染钩子在原版旋转角设置完成
+ * {@code setRotationAngles} 仍会驱动被替换的部件。动画由每个自定义部件的渲染入口在原版旋转角设置完成
  * 后按实体调用 {@link #runAnimations} 求值。
  */
 public class CustomEntityModels {
@@ -111,11 +113,19 @@ public class CustomEntityModels {
 
     private static boolean animationsEnabled;
 
+    // Currently rendering entity and interpolation factor, captured by the Mixin hook
+    // in RenderManager
+    // 当前正在渲染的实体与插值系数，由 RenderManager 的 Mixin 钩子捕获
+    private static Entity currentEntity;
+    private static float currentPartialTick;
+
     // frame_time / frame_counter state, advanced once per client frame by the hook
     // frame_time / frame_counter 状态，由钩子每客户端帧推进一次
     private static long lastFrameNanos;
     private static double frameTime = 1.0 / 60.0;
     private static int frameCounter;
+    /** Monotonic frame id for the per-model animation guard. / 逐模型动画去重用的单调帧编号。 */
+    private static long frameId;
 
     private CustomEntityModels() {}
 
@@ -209,6 +219,11 @@ public class CustomEntityModels {
         Binding binding = bindings.computeIfAbsent(living, r -> new Binding());
         CemModelBase cem = new CemModelBase(jem);
         binding.models.add(cem);
+        // "shadowSize" from cem_model.txt overrides the renderer default
+        // cem_model.txt 中的 "shadowSize" 覆盖渲染器默认阴影大小
+        if (!Float.isNaN(cem.getShadowSize())) {
+            ((AccessorRender) living).setShadowSize(cem.getShadowSize());
+        }
 
         // jem.models and cem.getParts() are parallel lists / jem.models 与 cem.getParts() 一一对应
         List<CemModelRenderer> parts = cem.getParts();
@@ -242,36 +257,52 @@ public class CustomEntityModels {
     }
 
     /**
-     * Evaluate all animation entries for one entity about to be rendered. Called by
-     * the render hook after the vanilla rotation angles are applied.
+     * Records the entity currently being rendered and its interpolation factor,
+     * called by the Mixin hook in {@code RenderManager.func_147939_a}.
      * <p>
-     * 为即将渲染的实体求值全部动画条目。由渲染钩子在原版旋转角应用后调用。
+     * 记录当前正在渲染的实体及其插值系数，由 {@code RenderManager.func_147939_a} 的
+     * Mixin 钩子调用。
      */
-    public static void runAnimations(RendererLivingEntity renderer, EntityLivingBase entity, float partialTick) {
+    public static void setRenderState(Entity entity, float partialTick) {
+        currentEntity = entity;
+        currentPartialTick = partialTick;
+    }
+
+    /**
+     * Evaluate all animation entries of the part's model. Called at the start of every
+     * custom part render pass, after the vanilla rotation angles are applied; a
+     * per-model guard keeps them running once per entity and frame.
+     * <p>
+     * 求值部件所属模型的全部动画条目。在每个自定义部件渲染开始时、原版旋转角应用后调用；
+     * 逐模型守卫保证每实体每帧只执行一次。
+     */
+    public static void runAnimations(CemModelRenderer part) {
         if (!animationsEnabled) {
             return;
         }
-        Binding binding = bindings.get(renderer);
-        if (binding == null) {
+        CemModelBase model = part.getCemModel();
+        Entity entity = currentEntity;
+        if (model == null || !(entity instanceof EntityLivingBase) || model.getAnimations().isEmpty()) {
             return;
         }
-        for (CemModelBase model : binding.models) {
-            context.prepare(entity, model, partialTick, 0.0);
-            for (CemModelBase.PartAnimation animation : model.getAnimations()) {
-                context.setCurrentPart(animation.owner);
-                try {
-                    animation.entry.apply(context);
-                } catch (RuntimeException e) {
-                    // Never let a bad expression crash rendering / 表达式异常不允许拖垮渲染
-                    logger.error("animation failed: %s", e);
-                }
+        // Extra draw passes (damage tint, color multiplier) must not re-run the
+        // expressions; var.* increments would otherwise double up
+        // 额外绘制通道（受伤染色、颜色叠加）不得重复执行表达式，否则 var.* 累加会翻倍
+        if (model.lastAnimatedFrame == frameId && model.lastAnimatedEntity == entity) {
+            return;
+        }
+        model.lastAnimatedFrame = frameId;
+        model.lastAnimatedEntity = entity;
+        context.prepare((EntityLivingBase) entity, model, currentPartialTick, 0.0);
+        for (CemModelBase.PartAnimation animation : model.getAnimations()) {
+            context.setCurrentPart(animation.owner);
+            try {
+                animation.entry.apply(context);
+            } catch (RuntimeException e) {
+                // Never let a bad expression crash rendering / 表达式异常不允许拖垮渲染
+                logger.error("animation failed: %s", e);
             }
         }
-    }
-
-    /** True if this renderer has CEM data bound. / 该渲染器绑定了 CEM 数据时为 true。 */
-    public static boolean hasBinding(RendererLivingEntity renderer) {
-        return bindings.containsKey(renderer);
     }
 
     /**
@@ -287,6 +318,7 @@ public class CustomEntityModels {
         lastFrameNanos = now;
         // Same wrap-around as OptiFine / 与 OptiFine 相同的回绕值
         frameCounter = (frameCounter + 1) % 720720;
+        frameId++;
     }
 
     /** Duration of the last frame in seconds. / 上一帧的时长（秒）。 */

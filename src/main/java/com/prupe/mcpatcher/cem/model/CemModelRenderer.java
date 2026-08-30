@@ -11,6 +11,7 @@ import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.opengl.GL11;
 
+import com.prupe.mcpatcher.cem.CustomEntityModels;
 import com.prupe.mcpatcher.cem.anim.ModelVarType;
 import com.prupe.mcpatcher.cem.parse.JpmBox;
 import com.prupe.mcpatcher.cem.parse.JpmPart;
@@ -65,6 +66,9 @@ public class CemModelRenderer extends ModelRenderer {
     /** "visible_boxes": render own boxes; children are unaffected. / "visible_boxes"：是否渲染自身盒子；不影响子部件。 */
     public boolean visibleBoxes = true;
 
+    /** Owning CEM model, used as the animation trigger key. / 所属 CEM 模型，用作动画触发键。 */
+    private final CemModelBase cemModel;
+
     private boolean compiled;
     private int displayList;
 
@@ -84,6 +88,7 @@ public class CemModelRenderer extends ModelRenderer {
 
     private CemModelRenderer(ModelBase base, JpmPart part, CemModelRenderer parent, ResourceLocation inheritedTexture) {
         super(base, part.id);
+        cemModel = base instanceof CemModelBase ? (CemModelBase) base : (parent != null ? parent.cemModel : null);
         if (part.textureSize != null) {
             textureWidth = part.textureSize[0];
             textureHeight = part.textureSize[1];
@@ -229,6 +234,11 @@ public class CemModelRenderer extends ModelRenderer {
         }
     }
 
+    /** Owning CEM model, null for orphan parts. / 所属 CEM 模型，孤立部件为 null。 */
+    public CemModelBase getCemModel() {
+        return cemModel;
+    }
+
     /**
      * Find a direct child submodel by its "id".
      * <p>
@@ -247,6 +257,11 @@ public class CemModelRenderer extends ModelRenderer {
 
     @Override
     public void render(float scale) {
+        // Vanilla setRotationAngles has already run by the time any part is drawn, so
+        // the animations are evaluated here, guarded to once per model, entity and frame
+        // 任一部件开始绘制时原版 setRotationAngles 必然已经执行，因此在此求值动画，
+        // 并按模型、实体、帧去重
+        CustomEntityModels.runAnimations(this);
         if (isHidden || !showModel) {
             return;
         }
