@@ -16,9 +16,9 @@ import decok.dfcdvadstf.optifuture.config.MCPatcherForgeConfig;
  * 元数据与生命周期锚点。
  */
 @Mod(
-    modid = Tags.MODID,
-    version = Tags.VERSION,
-    name = Tags.MODNAME,
+    modid = "mcpatcherforge",
+    version = "1.0.0-alpha",
+    name = "MCPatcherForge",
     acceptedMinecraftVersions = "[1.7.10]",
     acceptableRemoteVersions = "*")
 public class McPatcherForge {

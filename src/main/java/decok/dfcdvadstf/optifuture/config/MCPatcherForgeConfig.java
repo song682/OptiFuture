@@ -3,6 +3,7 @@ package decok.dfcdvadstf.optifuture.config;
 import java.io.File;
 import java.util.logging.Level;
 
+import decok.dfcdvadstf.optifuture.mixins.Mixins;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.config.Configuration;
 

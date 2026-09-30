@@ -234,11 +234,7 @@ if (project.enableUsingKotlin.toBoolean()) {
     }
 }
 
-jar {
-    from("./doc") {
-        into("doc")
-    }
-}
+
 
 tasks.register('deobfJar', Jar) {
     dependsOn reobf
@@ -247,10 +243,6 @@ tasks.register('deobfJar', Jar) {
 
     from sourceSets.main.output
     manifest.attributes(jar.manifest.getAttributes())
-
-    from("./doc") {
-        into("doc")
-    }
 }
 
 tasks.register('sourcesJar', Jar) {
@@ -261,10 +253,6 @@ tasks.register('sourcesJar', Jar) {
     from sourceSets.main.allSource
     exclude "methods.bin"
     exclude "McpToSrg.csv"
-
-    from("./doc") {
-        into("doc")
-    }
 }
 
 tasks.register("updateGradleProperties") {
@@ -297,18 +285,27 @@ if (project.include_license.toBoolean()){
         from file("./LICENSE-MCPatcherForge")
         from file("./LICENSE-ModernFeature")
         from file("./LICENSE-Original")
+        from("./doc") {
+            into("doc")
+        }
     }
     deobfJar {
         from file("./LICENSE-Assets")
         from file("./LICENSE-MCPatcherForge")
         from file("./LICENSE-ModernFeature")
         from file("./LICENSE-Original")
+        from("./doc") {
+            into("doc")
+        }
     }
     sourcesJar {
         from file("./LICENSE-Assets")
         from file("./LICENSE-MCPatcherForge")
         from file("./LICENSE-ModernFeature")
         from file("./LICENSE-Original")
+        from("./doc") {
+            into("doc")
+        }
     }
 }
 

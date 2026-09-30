@@ -10,16 +10,12 @@ import cpw.mods.fml.common.Mod;
  * FML groups MCPatcherForge under it and the mod list shows
  * "OptiFuture 1 child mod". All actual features live in the mixin system,
  * anchored by {@link McPatcherForge}.
- * <p>
- * 父模组容器，收纳内嵌的子模组 {@code MCPatcherForge}。类体刻意保持为空：
- * 该模组仅作为 mcmod.info 中声明的父锚点（{@code "parent": "optifuture"}），
- * 使 FML 将 MCPatcherForge 归入其下并在模组列表中显示 "OptiFuture 1 child mod"。
- * 实际功能全部由 mixin 系统提供，锚定于 {@link McPatcherForge}。
  */
 @Mod(
-    modid = "optifuture",
+    modid = Tags.MODID,
     version = Tags.VERSION,
-    name = "OptiFuture",
+    name = Tags.NAME,
+    useMetadata = true,
     acceptedMinecraftVersions = "[1.7.10]",
     acceptableRemoteVersions = "*")
 public class OptiFuture {
